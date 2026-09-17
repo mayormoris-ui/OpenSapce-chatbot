@@ -2,16 +2,20 @@
   "name": "whatsapp-agent-demo",
   "version": "1.0.0",
   "type": "module",
-  "main": "src/server.js",
+  "main": "src/baileys.js",
   "scripts": {
-    "dev": "node --watch src/server.js",
-    "start": "node src/server.js"
+    "dev": "node --watch src/baileys.js",
+    "start": "node src/baileys.js",
+    "dev:twilio": "node --watch src/server.js"
   },
   "dependencies": {
+    "@whiskeysockets/baileys": "^7.0.0-rc14",
     "dotenv": "^16.4.5",
     "express": "^4.19.2",
     "morgan": "^1.10.0",
     "openai": "^4.0.0",
+    "pino": "^10.3.1",
+    "qrcode-terminal": "^0.12.0",
     "twilio": "^5.3.0"
   }
 }

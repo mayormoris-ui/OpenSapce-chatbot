@@ -25,5 +25,6 @@ Thumbs.db
 *.tgz
 .ngrok2/
 ngrok.yml
+auth_info_baileys/
 jest.config.ts
 jest.config.js

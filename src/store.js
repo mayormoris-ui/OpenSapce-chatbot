@@ -5,14 +5,21 @@ const sessionState = new Map();
  * Session schema per WhatsApp user:
  * {
  *   history: OpenAI chat messages (rolling window),
- *   flow: null | "RESERVATION",
- *   reservationDraft: {
+ *   flow: null | "DISPUTE" | "INQUIRY",
+ *   draft: {
+ *     // For DISPUTE flow:
+ *     issueType?: string,
+ *     transactionRef?: string,
+ *     amount?: string,
+ *     description?: string,
  *     name?: string,
- *     date?: string,  // YYYY-MM-DD
- *     time?: string,  // HH:mm
- *     partySize?: number,
- *     notes?: string
- *     // phone intentionally omitted for demo; see createReservationStub
+ *     email?: string,
+ *
+ *     // For INQUIRY flow (Loans, Business Banking, Open Nearby, Open Invest):
+ *     serviceType?: string,
+ *     details?: string,
+ *     name?: string,
+ *     email?: string
  *   }
  * }
  */
@@ -30,7 +37,7 @@ export function getSession(userId) {
 		sessionState.get(userId) ?? {
 			history: [],
 			flow: null,
-			reservationDraft: {}
+			draft: {}
 		}
 	);
 }

@@ -1,274 +1,86 @@
-# Build a WhatsApp AI Agent with Twilio, Node.js, and OpenAI
+# OpenSpace WhatsApp Fintech AI Assistant (Node.js, Twilio & OpenAI)
 
-A practical example of how to build a WhatsApp AI agent using Twilio’s Messaging API, Node.js, and OpenAI.
-
-This project shows how to:
-
-- Build an AI agent for WhatsApp
-- Handle multi-turn conversations with state
-- Answer FAQs from structured data
-- Create a reservation or booking flow
-- Escalate to a human (stubbed)
-- Test locally using the Twilio WhatsApp Sandbox
-
-If you're searching for **"how to build a WhatsApp AI agent"**, **"Twilio WhatsApp chatbot with OpenAI"**, or **"Node.js AI agent example"**, this repo provides a working implementation you can run and extend.
+An AI-powered WhatsApp assistant built for **OpenSpace** (a modern fintech company) using Twilio's WhatsApp Messaging API, Node.js, and OpenAI.
 
 ---
 
-## What Is This?
+## 🌟 OpenSpace Capabilities
 
-This is a developer-focused WhatsApp AI agent built with:
-
-- **Twilio WhatsApp API**
-- **Node.js (Express)**
-- **OpenAI (structured extraction + intent classification)**
-
-It demonstrates how to design an agent that:
-
-- Understands natural language
-- Extracts structured information (party size, date, time)
-- Maintains conversation context
-- Separates AI interpretation from application logic
-
-The demo uses a restaurant scenario, but the architecture applies to:
-
-- Appointment scheduling
-- Lead intake
-- Customer support automation
-- Service booking systems
-- Internal tools
+- **💳 Account & Wallet Creation**: Guided onboarding steps and KYC information (BVN, NIN, ID verification).
+- **🏢 Business Banking**: SME accounts, corporate payroll, invoicing, and merchant collections.
+- **💰 Personal & Business Loans**: Loan product information, eligibility inquiries, and guided application intake.
+- **📍 Open Nearby**: Agent banking network, POS terminals, and cash-in/cash-out services.
+- **📈 Open Invest**: High-yield automated savings and regulated investment plans.
+- **⚠️ Transaction Support & Dispute Management**: Multi-turn dispute reporting (reference, amount, issue type) with trackable ticket generation (`TKT-xxxxxx`).
+- **🔍 Transaction Status Check**: Instant reference lookup.
+- **🕒 Business Hours & Human Escalation**: Operating schedule (Mon–Fri 9am–5pm WAT) with live support routing and ticket logging (`ESC-xxxxx`).
 
 ---
 
-## Architecture Overview
+## 🏗️ Architecture Overview
 
-High-level request flow:
-
+```
 User (WhatsApp)
-↓
-Twilio Webhook
-↓
-server.js
-↓
-runAgent() (agent.js)
-↓
-tools.js (FAQ / Reservation / Handoff)
-↓
-Twilio REST API → Reply to User
-
-Core files:
-
-- `src/server.js` — Twilio webhook handler
-- `src/agent.js` — AI agent decision logic
-- `src/tools.js` — Integrations + side effects
-- `src/store.js` — Session state
-- `src/bizHours.js` — Business hour checks
-- `data/faq.json` — Editable FAQ knowledge base
+       ↓
+ Twilio Webhook
+       ↓
+  src/server.js
+       ↓
+  src/agent.js (OpenAI Intent & Slot Extraction)
+   ├── data/faq.json (OpenSpace Knowledge Base)
+   ├── src/bizHours.js (WAT Timezone & Operating Hours)
+   ├── src/tools.js (Support Tickets, Product Leads, Status Check, Escalation)
+   └── src/store.js (Session State & Memory)
+       ↓
+ Twilio REST API → WhatsApp Reply
+```
 
 ---
 
-## How This WhatsApp AI Agent Works
+## 🚀 Getting Started
 
-### 1. Message Handling (Twilio → Express)
-
-Incoming WhatsApp messages are delivered via webhook.
-
-```js
-runAgent({ from, userText, session });
-```
-
-Twilio request signatures are validated before processing.
-
-### 2. Conversation Context (Session State)
-
-Each user gets a lightweight session:
-
-```JSON
-{
-  history: [],
-  flow: null,
-  reservationDraft: {}
-}
-```
-
-This allows:
-
-- Multi-turn reservation flows
-- Context-aware follow-ups
-- Clean state resets
-
-### 3. FAQ System (Deterministic Answers)
-
-Before generating AI responses, the agent checks `faq.json`.
-
-- Regex pattern matching
-- Environment variable templating
-- Consistent, controlled answers
-
-Example:
-
-```JSON
-"Hours:\nMon–Fri: ${BIZ_HOURS_MON_FRI}"
-```
-
-### 4. Reservation Flow (Structured AI Extraction)
-
-When a user says:
-
-> "Can I make a reservation for 2 at 7pm tonight?"
-
-The agent:
-
-1. Extracts party size, date, and time immediately
-2. Stores partial data in reservationDraft
-3. Asks only for missing fields
-4. Confirms the reservation (stubbed)
-
-Phone collection is intentionally stubbed for demo simplicity.
-
-### 5. Human Escalation
-
-If a user asks to speak to a human:
-
-- Business hours are checked
-- Response is adjusted accordingly
-- Escalation is stubbed for extension
-
-**Requirements**
-
-- Node.js 18+
-- npm
-- Twilio Account
-- OpenAI API Key
-- ngrok (or other HTTPS tunnel)
-
-**Quick Start**
-Clone the repository:
-
-```bash
-git clone https://github.com/YOUR_ORG/whatsapp-ai-agent-demo.git
-cd whatsapp-ai-agent-demo
-```
-
-Install dependencies:
+### 1. Install Dependencies
 
 ```bash
 npm install
 ```
 
-Create your environment file:
+### 2. Configure Environment Variables
 
-```bash
-cp .env.example .env
-```
-
-Add your credentials:
+Copy `.env.example` to `.env`:
 
 ```env
-TWILIO_ACCOUNT_SID=ACxxxxxxxx
-TWILIO_AUTH_TOKEN=xxxxxxxx
-TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
-OPENAI_API_KEY=sk-xxxxxxxx
+PORT=3000
+PUBLIC_WEBHOOK_URL=https://your-domain-or-ngrok.ngrok-free.app/twilio/whatsapp
 
-PUBLIC_WEBHOOK_URL=https://YOUR_NGROK_URL/twilio/whatsapp
+TWILIO_ACCOUNT_SID=your_twilio_account_sid
+TWILIO_AUTH_TOKEN=your_twilio_auth_token
+TWILIO_WHATSAPP_FROM=whatsapp:+14155238886
+
+OPENAI_API_KEY=your_openai_api_key
+OPENAI_MODEL=gpt-4o-mini
+
+COMPANY_NAME=OpenSpace
+COMPANY_EMAIL=hello@openspace.finance
+COMPANY_PHONE=+234 201 3309 599
+COMPANY_WEBSITE=https://openspace.finance
+COMPANY_TIMEZONE=Africa/Lagos
+
+BIZ_HOURS_MON_FRI=09:00-17:00
+BIZ_HOURS_SAT=CLOSED
+BIZ_HOURS_SUN=CLOSED
 ```
 
-Start the server:
+### 3. Run Locally
 
 ```bash
 npm run dev
 ```
 
-Expose it:
+---
 
-```bash
-ngrok http 3000
-```
+## 📞 Support & Contacts
 
-## Using the Twilio WhatsApp Sandbox
-
-You do not need a production WhatsApp sender.
-
-1. Go to Twilio Console → Messaging → WhatsApp Sandbox
-2. Send the join <code> message from your phone
-3. Configure webhook:
-
-```nginx
-POST https://YOUR_NGROK_URL/twilio/whatsapp
-```
-
-Now message the sandbox number and test the AI agent.
-
-## Customization Guide
-
-### Change Business Details
-
-Edit `.env`:
-
-```env
-RESTAURANT_NAME=Your Business
-RESTAURANT_ADDRESS=Your Address
-BIZ_HOURS_MON_FRI=09:00-17:00
-```
-
-### Update FAQ Answers
-
-Modify:
-
-```bash
-data/faq.json
-```
-
-Add patterns and responses.
-
-### Replace Reservation Stub
-
-Replace `createReservationStub()` in:
-
-```bash
-src/tools.js
-```
-
-Integrate:
-
-- OpenTable
-- Calendly
-- Custom booking APIs
-- Database storage
-
-### Persist Sessions
-
-Swap in-memory session storage for:
-
-- Redis
-- PostgreSQL
-- MongoDB
-
-### Security Notes
-
-- `.env` is excluded from Git
-- OpenAI keys remain server-side
-- Twilio signatures are validated
-- AI output is constrained to structured JSON
-- Code retains execution control
-
-### Common Questions
-
-**Why use Twilio for WhatsApp AI agents?**
-Twilio handles WhatsApp infrastructure, compliance, and delivery while your code focuses on conversation logic.
-
-**Can this be adapted for SMS?**
-Yes. Replace the WhatsApp sender with SMS in Twilio and reuse the same agent architecture.
-
-**Is this production-ready?**
-It’s production-patterned. This is a demo repo and should not be considered production ready.
-
-**Extend This Project**
-
-- Add vector search for smarter FAQs
-- Add Twilio Conversations for live agent handoff
-- Add analytics for intent tracking
-- Add authentication for user-specific workflows
-
-**License**
-MIT License
+- **Email**: hello@openspace.finance
+- **Phone**: +234 201 3309 599
+- **Operating Hours**: Monday – Friday, 9:00 AM – 5:00 PM WAT

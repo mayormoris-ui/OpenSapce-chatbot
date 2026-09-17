@@ -1,70 +1,81 @@
 import OpenAI from "openai";
-import { lookupRestaurantFaq, createReservationStub, handoffToHumanStub } from "./tools.js";
+import {
+	lookupFaq,
+	createSupportTicketStub,
+	createProductInquiryStub,
+	checkTransactionStatusStub,
+	handoffToHumanStub
+} from "./tools.js";
 import { isWithinBusinessHours } from "./bizHours.js";
 
-const openai = new OpenAI({ apiKey: process.env.OPENAI_API_KEY });
+const openai = new OpenAI({
+	apiKey: process.env.GROQ_API_KEY || process.env.OPENAI_API_KEY,
+	baseURL: process.env.AI_BASE_URL || "https://api.groq.com/openai/v1"
+});
 
-function mustHaveEnv(name) {
-	if (!process.env[name]) throw new Error(`Missing ${name}`);
+function mustHaveEnv() {
+	if (!process.env.GROQ_API_KEY && !process.env.OPENAI_API_KEY) {
+		throw new Error("Missing GROQ_API_KEY or OPENAI_API_KEY in environment variables");
+	}
 }
 
-function restaurantContext() {
+function companyContext() {
 	return {
-		name: process.env.RESTAURANT_NAME || "Our Business",
-		phone: process.env.RESTAURANT_PHONE || "N/A",
-		address: process.env.RESTAURANT_ADDRESS || "N/A",
-		tz: process.env.RESTAURANT_TIMEZONE || "America/Chicago"
+		name: process.env.COMPANY_NAME || process.env.RESTAURANT_NAME || "OpenSpace",
+		email: process.env.COMPANY_EMAIL || "hello@openspace.finance",
+		phone: process.env.COMPANY_PHONE || "+234 201 3309 599",
+		website: process.env.COMPANY_WEBSITE || "https://openspace.finance",
+		tz: process.env.COMPANY_TIMEZONE || "Africa/Lagos"
 	};
 }
 
-function missingReservationFields(draft) {
-	// Phone intentionally NOT required for the demo.
+// -------------------------------------------------------------
+// Flow 1: Dispute / Issue Reporting Slot Extraction & Questioning
+// -------------------------------------------------------------
+function missingDisputeFields(draft) {
 	const missing = [];
-	if (!draft.partySize) missing.push("partySize");
-	if (!draft.date) missing.push("date");
-	if (!draft.time) missing.push("time");
+	if (!draft.description && !draft.issueType) missing.push("description");
+	if (!draft.amount) missing.push("amount");
+	if (!draft.transactionRef) missing.push("transactionRef");
 	if (!draft.name) missing.push("name");
 	return missing;
 }
 
-function nextReservationQuestion(missing) {
+function nextDisputeQuestion(missing) {
 	const field = missing[0];
-
 	switch (field) {
-		case "partySize":
-			return "Absolutely — how many people should I plan for?";
-		case "date":
-			return "Nice. What day were you thinking — today, tomorrow, or another date?";
-		case "time":
-			return "And what time works best?";
+		case "description":
+			return "Could you briefly describe the issue (e.g., transfer not received, double debit, POS decline)?";
+		case "amount":
+			return "What was the transaction amount involved (e.g., 50,000 NGN)?";
+		case "transactionRef":
+			return "Do you have the Transaction Reference or Session ID? (If you don't have it, just type 'none')";
 		case "name":
-			return "Perfect. What name should I put it under?";
+			return "Please provide your full name so we can locate your OpenSpace profile.";
+		case "email":
+			return "What is your registered email address?";
 		default:
-			return "Got it — what details should I add?";
+			return "Could you provide any additional details for this dispute?";
 	}
 }
 
-async function extractReservationFields({ model, userText }) {
-	const tz = process.env.RESTAURANT_TIMEZONE || "America/Chicago";
-
+async function extractDisputeFields({ model, userText }) {
 	const extractorSystem = `
-Extract reservation details from the user's message.
+Extract transaction dispute / support issue details from the user message.
 Return JSON only:
 {
-  "partySize": number|null,
-  "date": "YYYY-MM-DD"|null,
-  "time": "HH:mm"|null,
+  "issueType": string|null,
+  "transactionRef": string|null,
+  "amount": string|null,
+  "description": string|null,
   "name": string|null,
-  "phone": string|null,
-  "notes": string|null,
+  "email": string|null,
   "cancel": boolean
 }
 Rules:
-- If user wants to cancel/stop, set cancel=true.
+- If user wants to cancel or stop logging the dispute, set cancel=true.
+- If user says they don't have reference ID (or "none", "no"), set transactionRef to "N/A".
 - If no value present, use null.
-- Interpret relative dates like "today", "tonight", "this evening", "tomorrow" using timezone: ${tz}.
-- Convert times like "7pm" to 24-hour "19:00".
-- If the user says "this evening" and provides a time, treat date as today.
 `;
 
 	const extraction = await openai.chat.completions.create({
@@ -83,83 +94,216 @@ Rules:
 	}
 }
 
-function mergeDraft(draft, parsed) {
+// -------------------------------------------------------------
+// Flow 2: Product / Loan Inquiry Slot Extraction & Questioning
+// -------------------------------------------------------------
+function missingInquiryFields(draft) {
+	const missing = [];
+	if (!draft.serviceType) missing.push("serviceType");
+	if (!draft.details) missing.push("details");
+	if (!draft.name) missing.push("name");
+	return missing;
+}
+
+function nextInquiryQuestion(missing) {
+	const field = missing[0];
+	switch (field) {
+		case "serviceType":
+			return "Which OpenSpace service are you interested in? (Personal Loan, Business Loan, Business Banking, Open Nearby, or Open Invest)";
+		case "details":
+			return "Could you share the amount or specific requirements you have in mind?";
+		case "name":
+			return "What is your full name?";
+		case "email":
+			return "What is the best email or phone number for our team to follow up with?";
+		default:
+			return "What other details would you like to share?";
+	}
+}
+
+async function extractInquiryFields({ model, userText }) {
+	const extractorSystem = `
+Extract product inquiry or loan application lead details from the user's message.
+Services include: Personal Loan, Business Loan, Business Banking, Open Nearby (Agent Banking), Open Invest (Savings/Investments), Wallet/Account Creation.
+Return JSON only:
+{
+  "serviceType": string|null,
+  "details": string|null,
+  "name": string|null,
+  "email": string|null,
+  "cancel": boolean
+}
+Rules:
+- If user wants to cancel/stop, set cancel=true.
+- If no value present, use null.
+`;
+
+	const extraction = await openai.chat.completions.create({
+		model,
+		messages: [
+			{ role: "system", content: extractorSystem.trim() },
+			{ role: "user", content: userText }
+		],
+		response_format: { type: "json_object" }
+	});
+
+	try {
+		return JSON.parse(extraction.choices[0].message.content);
+	} catch {
+		return {};
+	}
+}
+
+function mergeDraft(draft, parsed, allowedKeys) {
 	const next = { ...draft };
-	for (const key of ["partySize", "date", "time", "name", "phone", "notes"]) {
+	for (const key of allowedKeys) {
 		const v = parsed?.[key];
 		if (v !== null && v !== undefined && v !== "") next[key] = v;
 	}
 	return next;
 }
 
+// -------------------------------------------------------------
+// Main Agent Handler
+// -------------------------------------------------------------
 export async function runAgent({ from, userText, session }) {
-	mustHaveEnv("OPENAI_API_KEY");
-	const model = process.env.OPENAI_MODEL || "gpt-4o-mini";
-	const info = restaurantContext();
+	mustHaveEnv();
+	const model = process.env.GROQ_MODEL || process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
+	const info = companyContext();
 
-	// --- Reservation flow mode ---
-	if (session.flow === "RESERVATION") {
-		const parsed = await extractReservationFields({ model, userText });
+	if (!session.draft) session.draft = {};
+	const history = (session.history || []).slice(-10);
+
+	// --- 1. Ongoing DISPUTE Flow Mode ---
+	if (session.flow === "DISPUTE") {
+		const parsed = await extractDisputeFields({ model, userText });
 
 		if (parsed.cancel) {
 			session.flow = null;
-			session.reservationDraft = {};
-			return {
-				reply: "No problem — I’ve cancelled the reservation request. Anything else I can help with?",
-				newSession: session
-			};
+			session.draft = {};
+			const reply = "Understood. I have cancelled the dispute report. How else can I assist you today?";
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
 		}
 
-		session.reservationDraft = mergeDraft(session.reservationDraft, parsed);
+		session.draft = mergeDraft(session.draft, parsed, [
+			"issueType",
+			"transactionRef",
+			"amount",
+			"description",
+			"name",
+			"email"
+		]);
 
-		const missing = missingReservationFields(session.reservationDraft);
+		const missing = missingDisputeFields(session.draft);
 		if (missing.length > 0) {
-			return { reply: nextReservationQuestion(missing), newSession: session };
+			const reply = nextDisputeQuestion(missing);
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
 		}
 
-		const result = await createReservationStub({ from, draft: session.reservationDraft });
-
+		const result = await createSupportTicketStub({ from, draft: session.draft });
 		session.flow = null;
-		session.reservationDraft = {};
+		session.draft = {};
 
 		const msg =
-			`✅ You’re all set (demo)\n` +
-			`Name: ${result.name}\n` +
-			`Party: ${result.partySize}\n` +
-			`When: ${result.date} at ${result.time}\n` +
-			`Confirmation: ${result.reservationId}\n\n` +
-			`Anything else I can help with?`;
+			`📋 *Support Ticket Logged Successfully*\n\n` +
+			`• *Ticket ID:* ${result.ticketId}\n` +
+			`• *Customer:* ${result.name}\n` +
+			`• *Issue:* ${result.description}\n` +
+			`• *Amount:* ${result.amount}\n` +
+			`• *Reference:* ${result.transactionRef}\n` +
+			`• *Status:* ${result.status}\n\n` +
+			`Our support team is reviewing your case and will follow up shortly. You can also reach us directly at ${info.email}.`;
 
+		session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
 		return { reply: msg, newSession: session };
 	}
 
-	// --- Normal mode: plan what to do ---
-	const withinHours = isWithinBusinessHours();
-	const history = session.history.slice(-10);
+	// --- 2. Ongoing INQUIRY Flow Mode ---
+	if (session.flow === "INQUIRY") {
+		const parsed = await extractInquiryFields({ model, userText });
 
-	const system = `
-You are the WhatsApp assistant for "${info.name}".
-You can:
-1) Answer FAQs (hours, location, menu/dietary, parking, specials, takeout).
-2) Start a reservation/appointment flow.
-3) Start a human handoff.
-Keep messages short and friendly. Ask one question at a time.
-Return JSON only:
+		if (parsed.cancel) {
+			session.flow = null;
+			session.draft = {};
+			const reply = "No problem — I have cancelled this application request. What else can I help you with?";
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
+		}
+
+		session.draft = mergeDraft(session.draft, parsed, [
+			"serviceType",
+			"details",
+			"name",
+			"email"
+		]);
+
+		const missing = missingInquiryFields(session.draft);
+		if (missing.length > 0) {
+			const reply = nextInquiryQuestion(missing);
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
+		}
+
+		const result = await createProductInquiryStub({ from, draft: session.draft });
+		session.flow = null;
+		session.draft = {};
+
+		const msg =
+			`🚀 *Request Received*\n\n` +
+			`• *Reference ID:* ${result.inquiryId}\n` +
+			`• *Name:* ${result.name}\n` +
+			`• *Product / Service:* ${result.serviceType}\n` +
+			`• *Details:* ${result.details}\n\n` +
+			`An ${info.name} specialist will contact you to finalize the setup. Feel free to ask if you have any questions in the meantime!`;
+
+		session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
+		return { reply: msg, newSession: session };
+	}
+
+	// --- 3. Normal Mode: Plan Intent & Action ---
+	const withinHours = isWithinBusinessHours();
+
+	const systemPrompt = `
+You are the official WhatsApp AI assistant for "${info.name}", a modern fintech company.
+${info.name} products & services:
+1. Account & Digital Wallet Creation (Fast online KYC, instant virtual accounts)
+2. Business Banking (SME accounts, corporate payroll, invoicing, merchant tools)
+3. Personal Loans & Business Loans (Flexible financing, quick approvals)
+4. Open Nearby (Agent banking, POS terminals, cash-in/cash-out)
+5. Open Invest (High-yield savings & structured investment plans)
+6. Transaction tracking, transfer help, and payment dispute management
+
+Contact & Operating details:
+- Email: ${info.email}
+- Phone: ${info.phone}
+- Support Hours: Mon–Fri 9:00 AM - 5:00 PM WAT
+- Current Support Availability: ${withinHours ? "ONLINE (Within Business Hours)" : "OFFLINE (Outside Business Hours)"}
+
+Identify user intent and return JSON only:
 {
-  "intent": "FAQ"|"RESERVATION"|"HANDOFF"|"GENERAL",
-  "startReservation": boolean,
+  "intent": "FAQ"|"DISPUTE"|"INQUIRY"|"TX_STATUS"|"HANDOFF"|"GENERAL",
+  "startDispute": boolean,
+  "startInquiry": boolean,
   "startHandoff": boolean,
   "faqQuery": string|null,
+  "txRef": string|null,
   "handoffSummary": string|null,
   "reply": string
 }
-Business hours availability right now: ${withinHours ? "AVAILABLE" : "NOT_AVAILABLE"}.
+Guidelines:
+- If user wants to report a failed payment, dispute, chargeback, or money deducted without credit, set startDispute=true and intent="DISPUTE".
+- If user wants to apply for a loan, start business banking, join Open Nearby agent network, or invest, set startInquiry=true and intent="INQUIRY".
+- If user asks a product question, onboarding steps, contact, or hours, set intent="FAQ" with a concise faqQuery.
+- If user explicitly requests a human / agent / manager, set startHandoff=true.
+- Keep replies professional, clear, and reassuring.
 `;
 
 	const decision = await openai.chat.completions.create({
 		model,
 		messages: [
-			{ role: "system", content: system.trim() },
+			{ role: "system", content: systemPrompt.trim() },
 			...history,
 			{ role: "user", content: userText }
 		],
@@ -172,17 +316,19 @@ Business hours availability right now: ${withinHours ? "AVAILABLE" : "NOT_AVAILA
 	} catch {
 		plan = {
 			intent: "GENERAL",
-			startReservation: false,
+			startDispute: false,
+			startInquiry: false,
 			startHandoff: false,
 			faqQuery: null,
+			txRef: null,
 			handoffSummary: null,
-			reply: "Could you rephrase that?"
+			reply: `Welcome to ${info.name}! How can I assist you with your accounts, loans, investments, or transfers today?`
 		};
 	}
 
-	// Try FAQ tool first when appropriate
+	// A. Check FAQ First
 	if (plan.intent === "FAQ" || plan.faqQuery) {
-		const answer = await lookupRestaurantFaq({ question: plan.faqQuery || userText });
+		const answer = await lookupFaq({ question: plan.faqQuery || userText });
 		if (answer) {
 			session.history = [
 				...history,
@@ -193,25 +339,54 @@ Business hours availability right now: ${withinHours ? "AVAILABLE" : "NOT_AVAILA
 		}
 	}
 
-	// Start reservation flow — IMPORTANT: extract immediately from the original user message
-	if (plan.startReservation || plan.intent === "RESERVATION") {
-		session.flow = "RESERVATION";
+	// B. Transaction Status Check
+	if (plan.intent === "TX_STATUS" && plan.txRef) {
+		const statusResult = await checkTransactionStatusStub({ txRef: plan.txRef });
+		if (statusResult) {
+			const reply =
+				`🔍 *Transaction Status Lookup*\n` +
+				`• *Reference:* ${statusResult.txRef}\n` +
+				`• *Amount:* ${statusResult.amount}\n` +
+				`• *Timestamp:* ${statusResult.timestamp}\n` +
+				`• *Status:* ${statusResult.message}\n\n` +
+				`Need further assistance or want to log a dispute for this transaction? Just reply "dispute".`;
 
-		const initialParsed = await extractReservationFields({ model, userText });
+			session.history = [
+				...history,
+				{ role: "user", content: userText },
+				{ role: "assistant", content: reply }
+			];
+			return { reply, newSession: session };
+		}
+	}
+
+	// C. Start Dispute Flow
+	if (plan.startDispute || plan.intent === "DISPUTE") {
+		session.flow = "DISPUTE";
+		session.draft = {};
+
+		const initialParsed = await extractDisputeFields({ model, userText });
 		if (initialParsed.cancel) {
 			session.flow = null;
-			session.reservationDraft = {};
-			const msg = "All good — I won’t make a reservation. Anything else?";
-			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
-			return { reply: msg, newSession: session };
+			session.draft = {};
+			const reply = "Dispute logging cancelled. How else can I help you today?";
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
 		}
 
-		session.reservationDraft = mergeDraft({}, initialParsed);
+		session.draft = mergeDraft({}, initialParsed, [
+			"issueType",
+			"transactionRef",
+			"amount",
+			"description",
+			"name",
+			"email"
+		]);
 
-		const missing = missingReservationFields(session.reservationDraft);
+		const missing = missingDisputeFields(session.draft);
 		const reply = missing.length > 0
-			? nextReservationQuestion(missing)
-			: "Got it. What name should I put it under?";
+			? nextDisputeQuestion(missing)
+			: "Please confirm your full name so we can record this support ticket.";
 
 		session.history = [
 			...history,
@@ -219,21 +394,18 @@ Business hours availability right now: ${withinHours ? "AVAILABLE" : "NOT_AVAILA
 			{ role: "assistant", content: reply }
 		];
 
-		// If we somehow already have everything including name, we can auto-confirm.
-		// (We keep it simple and ask for name if missingReservationFields returned empty unexpectedly.)
-		if (missing.length === 0 && session.reservationDraft.name) {
-			const result = await createReservationStub({ from, draft: session.reservationDraft });
-
+		if (missing.length === 0 && session.draft.name) {
+			const result = await createSupportTicketStub({ from, draft: session.draft });
 			session.flow = null;
-			session.reservationDraft = {};
+			session.draft = {};
 
 			const msg =
-				`✅ Reservation confirmed (demo)\n` +
-				`• Name: ${result.name}\n` +
-				`• Party: ${result.partySize}\n` +
-				`• When: ${result.date} at ${result.time}\n` +
-				`Confirmation: ${result.reservationId}\n\n` +
-				`Anything else you’d like to know about ${info.name}?`;
+				`📋 *Support Ticket Logged (Ref: ${result.ticketId})*\n\n` +
+				`• *Name:* ${result.name}\n` +
+				`• *Issue:* ${result.description}\n` +
+				`• *Amount:* ${result.amount}\n` +
+				`• *Transaction Ref:* ${result.transactionRef}\n\n` +
+				`Our dispute team will review this and notify you at ${result.email || "this WhatsApp number"}.`;
 
 			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
 			return { reply: msg, newSession: session };
@@ -242,14 +414,65 @@ Business hours availability right now: ${withinHours ? "AVAILABLE" : "NOT_AVAILA
 		return { reply, newSession: session };
 	}
 
-	// Start human handoff (stub)
+	// D. Start Product / Loan Inquiry Flow
+	if (plan.startInquiry || plan.intent === "INQUIRY") {
+		session.flow = "INQUIRY";
+		session.draft = {};
+
+		const initialParsed = await extractInquiryFields({ model, userText });
+		if (initialParsed.cancel) {
+			session.flow = null;
+			session.draft = {};
+			const reply = "Request cancelled. Let me know if you need information on any other OpenSpace services.";
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
+		}
+
+		session.draft = mergeDraft({}, initialParsed, [
+			"serviceType",
+			"details",
+			"name",
+			"email"
+		]);
+
+		const missing = missingInquiryFields(session.draft);
+		const reply = missing.length > 0
+			? nextInquiryQuestion(missing)
+			: "Could you provide your full name so our product specialist can reach out?";
+
+		session.history = [
+			...history,
+			{ role: "user", content: userText },
+			{ role: "assistant", content: reply }
+		];
+
+		if (missing.length === 0 && session.draft.name) {
+			const result = await createProductInquiryStub({ from, draft: session.draft });
+			session.flow = null;
+			session.draft = {};
+
+			const msg =
+				`🚀 *Inquiry Submitted (Ref: ${result.inquiryId})*\n\n` +
+				`• *Name:* ${result.name}\n` +
+				`• *Product:* ${result.serviceType}\n` +
+				`• *Details:* ${result.details}\n\n` +
+				`Our ${info.name} team has received your request and will contact you shortly!`;
+
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
+			return { reply: msg, newSession: session };
+		}
+
+		return { reply, newSession: session };
+	}
+
+	// E. Start Human Escalation
 	if (plan.startHandoff || plan.intent === "HANDOFF") {
 		const summary = plan.handoffSummary || userText;
 		const result = await handoffToHumanStub({ from, summary });
 
 		const reply = result.available
-			? `Got it — I’m looping in a human now (demo). Please share any extra details here and they’ll reply shortly.\nRef: ${result.handoffId}`
-			: `We’re currently outside business hours. I can take a message and a human will follow up when we’re open.\nRef: ${result.handoffId}\nWhat should I pass along?`;
+			? `👨‍💼 *Connecting to Support*\n\nI’m alerting our support team right now.\n• *Reference:* ${result.handoffId}\n• *Phone:* ${result.phone}\n• *Email:* ${result.email}\n\nPlease leave any additional details here and an agent will respond directly.`
+			: `🕒 *Support Outside Operating Hours*\n\nOur team is currently offline (Operating hours: Mon–Fri 9:00 AM - 5:00 PM WAT).\n• *Reference:* ${result.handoffId}\n• *Email:* ${result.email}\n\nPlease leave your message and email address here, and we will get back to you first thing when we open!`;
 
 		session.history = [
 			...history,
@@ -260,11 +483,11 @@ Business hours availability right now: ${withinHours ? "AVAILABLE" : "NOT_AVAILA
 		return { reply, newSession: session };
 	}
 
-	// Default reply
+	// F. Default Assistant Response
 	const reply =
 		typeof plan.reply === "string" && plan.reply.trim()
 			? plan.reply.trim()
-			: `How can I help? (hours, reservations, or a human)`;
+			: `Welcome to ${info.name}! I can help you with:\n1. 💳 Account & Wallet Creation\n2. 🏢 Business Banking\n3. 💰 Personal & Business Loans\n4. 📍 Open Nearby & Open Invest\n5. ⚠️ Transaction Help & Disputes\n\nHow can I help you today?`;
 
 	session.history = [
 		...history,

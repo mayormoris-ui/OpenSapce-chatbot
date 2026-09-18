@@ -1,0 +1,165 @@
+{
+  "version": 1,
+  "entries": [
+    {
+      "id": "hours",
+      "patterns": [
+        "hours",
+        "open(ing)? hours",
+        "when are you open",
+        "operating hours",
+        "support hours",
+        "business hours",
+        "work hours"
+      ],
+      "answer": "Our customer support hours are:\nMon–Fri: ${BIZ_HOURS_MON_FRI} (WAT)\nWeekends: Closed\n(Timezone: ${COMPANY_TIMEZONE})\n\nYou can also reach us via email at ${COMPANY_EMAIL} anytime."
+    },
+    {
+      "id": "contact",
+      "patterns": [
+        "contact",
+        "phone",
+        "email",
+        "call",
+        "reach you",
+        "customer care",
+        "support number",
+        "help desk",
+        "office address",
+        "website"
+      ],
+      "answer": "You can reach ${COMPANY_NAME} via:\n📧 Email: ${COMPANY_EMAIL}\n📞 Phone: ${COMPANY_PHONE}\n🌐 Website: ${COMPANY_WEBSITE}\n🕒 Support Hours: Mon–Fri 9am–5pm WAT"
+    },
+    {
+      "id": "services_overview",
+      "patterns": [
+        "what do you do",
+        "services",
+        "products",
+        "about openspace",
+        "what is openspace",
+        "what can you do",
+        "features"
+      ],
+      "answer": "${COMPANY_NAME} offers comprehensive fintech solutions:\n1. 💳 Account & Digital Wallet Creation\n2. 🏢 Business Banking & Corporate Accounts\n3. 💰 Personal & Business Loans\n4. 📍 Open Nearby (Agent Banking / Cash-In & Cash-Out)\n5. 📈 Open Invest (High-yield Savings & Investments)\n\nLet me know which product you would like to explore!"
+    },
+    {
+      "id": "account_wallet_creation",
+      "patterns": [
+        "create account",
+        "open account",
+        "create wallet",
+        "wallet creation",
+        "how to sign up",
+        "register",
+        "onboarding",
+        "kyc",
+        "requirements"
+      ],
+      "answer": "Creating an account and digital wallet with ${COMPANY_NAME} is quick and secure:\n\n1. Sign up on our mobile app or web portal (${COMPANY_WEBSITE}).\n2. Provide your basic details (Full Name, Phone Number, Email).\n3. Complete KYC verification (BVN, NIN, and government-issued ID).\n4. Your instant virtual account & digital wallet will be ready to fund and use immediately!"
+    },
+    {
+      "id": "business_banking",
+      "patterns": [
+        "business banking",
+        "corporate account",
+        "business account",
+        "merchant",
+        "invoicing",
+        "payroll",
+        "sme banking"
+      ],
+      "answer": "${COMPANY_NAME} Business Banking empowers businesses and SMEs with:\n• Dedicated corporate bank accounts\n• Multi-user access and role permissions\n• Automated payroll & invoicing tools\n• Fast merchant payment collections & APIs\n\nTo apply or speak with our business team, tell me your business name and email!"
+    },
+    {
+      "id": "personal_loans",
+      "patterns": [
+        "personal loan",
+        "individual loan",
+        "borrow money",
+        "salary advance",
+        "quick loan"
+      ],
+      "answer": "${COMPANY_NAME} Personal Loans provide fast access to credit with flexible repayment terms:\n• Competitive interest rates\n• No hidden charges\n• Fast approval directly to your OpenSpace wallet\n\nTo check your loan eligibility, share your desired loan amount and email, and our team will get in touch!"
+    },
+    {
+      "id": "business_loans",
+      "patterns": [
+        "business loan",
+        "sme loan",
+        "working capital",
+        "equipment financing",
+        "inventory loan",
+        "commercial loan"
+      ],
+      "answer": "${COMPANY_NAME} Business Loans help growing businesses scale:\n• Working capital & inventory financing\n• Flexible collateral and repayment options\n• Quick credit evaluation\n\nWould you like to speak to a loan specialist? Tell me your company name and loan requirements."
+    },
+    {
+      "id": "open_nearby",
+      "patterns": [
+        "open nearby",
+        "agent banking",
+        "nearby agent",
+        "pos terminal",
+        "cash in",
+        "cash out",
+        "become an agent"
+      ],
+      "answer": "📍 Open Nearby brings financial services to your doorstep:\n• Cash deposit (cash-in) & withdrawal (cash-out) at nearby verified agents\n• POS terminals for retail merchants and agents\n• Bill payments and fund transfers\n\nInterested in becoming an Open Nearby agent? Let us know and we'll connect you with our agency team!"
+    },
+    {
+      "id": "open_invest",
+      "patterns": [
+        "open invest",
+        "invest",
+        "investment",
+        "savings",
+        "earn interest",
+        "wealth",
+        "yield",
+        "fixed deposit"
+      ],
+      "answer": "📈 Open Invest helps you grow your wealth:\n• High-yield automated savings plans\n• Fixed and flexible investment portfolios\n• Regulated, secure assets with attractive returns\n• Real-time portfolio tracking in your OpenSpace dashboard"
+    },
+    {
+      "id": "transfer_transaction_help",
+      "patterns": [
+        "transfer help",
+        "transaction status",
+        "delayed transfer",
+        "transfer not received",
+        "where is my money",
+        "check transaction",
+        "receipt"
+      ],
+      "answer": "Need help with a transfer?\n• Most transfers are instant. If a transfer is delayed, interbank settlement can take up to 24 hours.\n• You can check transaction history and download receipts directly in the ${COMPANY_NAME} app.\n• If you need us to trace a specific transaction, provide the Transaction Reference ID and Amount."
+    },
+    {
+      "id": "payment_disputes",
+      "patterns": [
+        "dispute",
+        "failed transaction",
+        "debited but not credited",
+        "double debit",
+        "fraud",
+        "report issue",
+        "chargeback",
+        "complaint"
+      ],
+      "answer": "To report a payment dispute or failed transaction:\n• Please provide: Transaction Reference, Date, Amount, and a brief description.\n• You can also email ${COMPANY_EMAIL} or say “dispute” here to log a support ticket immediately."
+    },
+    {
+      "id": "human",
+      "patterns": [
+        "human",
+        "agent",
+        "representative",
+        "speak to someone",
+        "talk to a person",
+        "customer service rep",
+        "operator"
+      ],
+      "answer": "I can connect you with an OpenSpace customer support representative. Tell me what you need assistance with and I'll loop in our team."
+    }
+  ]
+}

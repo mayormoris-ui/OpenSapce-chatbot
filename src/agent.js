@@ -180,6 +180,14 @@ function mergeDraft(draft, parsed, allowedKeys) {
 // -------------------------------------------------------------
 // Main Agent Handler
 // -------------------------------------------------------------
+// Returns true when the AI should address the user by name.
+// Rules: always on the first message, then once every NAME_INTERVAL messages.
+const NAME_INTERVAL = 4;
+function shouldUseName(session) {
+	const count = session.messageCount || 0; // 0-indexed before increment
+	return count === 0 || count % NAME_INTERVAL === 0;
+}
+
 export async function runAgent({ from, userText, session, contactName }) {
 	mustHaveEnv();
 	const model = process.env.GROQ_MODEL || process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
@@ -196,6 +204,11 @@ export async function runAgent({ from, userText, session, contactName }) {
 		session.contactName = contactName;
 	}
 	const displayName = firstNameOf(session.contactName);
+
+	// Determine whether this turn should address the user by name, then
+	// increment the counter so the next call gets the correct position.
+	const useName = displayName && shouldUseName(session);
+	session.messageCount = (session.messageCount || 0) + 1;
 
 	const history = (session.history || []).slice(-10);
 
@@ -308,9 +321,11 @@ Contact & Operating details:
 - Support Hours: Mon–Fri 9:00 AM - 5:00 PM WAT
 - Current Support Availability: ${withinHours ? "ONLINE (Within Business Hours)" : "OFFLINE (Outside Business Hours)"}
 
-${displayName
-	? `The user's WhatsApp display name is "${displayName}". Greet them by this first name naturally, the way a helpful human support agent would — e.g. at the start of the conversation, or when confirming something for them. Don't force it into every single message; use it where it feels natural, not repetitively.`
-	: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
+${useName
+	? `The user's first name is "${displayName}". You MUST address them by this name somewhere in your reply — naturally woven in (e.g. at the start of a greeting or at the end of a confirmation), not bolted on awkwardly.`
+	: displayName
+		? `The user's first name is "${displayName}". Do NOT use their name in this reply — keep it name-free to avoid repetition. Only address them by name on the first message, at closing confirmations, and every few messages.`
+		: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
 
 Identify user intent and return JSON only:
 {

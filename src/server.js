@@ -32,6 +32,7 @@ app.post(["/twilio/whatsapp", "/tw", "/webhook"], async (req, res) => {
 		const messageSid = req.body.MessageSid;
 		const from = req.body.From; // "whatsapp:+..."
 		const body = (req.body.Body || "").trim();
+		const profileName = req.body.ProfileName || null; // WhatsApp display name, when Twilio has it
 
 		if (!from) {
 			return res.status(400).send("Bad request: Missing 'From' field.");
@@ -48,7 +49,9 @@ app.post(["/twilio/whatsapp", "/tw", "/webhook"], async (req, res) => {
 		const twiml = new twilio.twiml.MessagingResponse();
 
 		if (!body) {
-			const welcomeMsg = "Welcome to OpenSpace! How can I assist you with your accounts, loans, or transfers today?";
+			const welcomeMsg = profileName
+				? `Welcome to OpenSpace, ${profileName.trim().split(/\s+/)[0]}! How can I assist you with your accounts, loans, or transfers today?`
+				: "Welcome to OpenSpace! How can I assist you with your accounts, loans, or transfers today?";
 			twiml.message(welcomeMsg);
 			return res.type("text/xml").send(twiml.toString());
 		}
@@ -56,7 +59,7 @@ app.post(["/twilio/whatsapp", "/tw", "/webhook"], async (req, res) => {
 		const session = getSession(from);
 		console.log(`[🤖 Generating AI Response...]`);
 		const t0 = Date.now();
-		const { reply, newSession } = await runAgent({ from, userText: body, session });
+		const { reply, newSession } = await runAgent({ from, userText: body, session, contactName: profileName });
 		console.log(`[⏱ Agent took ${Date.now() - t0}ms]`);
 		//const { reply, newSession } = await runAgent({ from, userText: body, session });
 

@@ -110,7 +110,8 @@ async function startBaileysBot() {
 			if (!trimmedText) continue;
 
 			const senderNumber = remoteJid.split("@")[0];
-			const pushName = msg.pushName || "Customer";
+			const rawPushName = msg.pushName || null; // undefined until WhatsApp actually sends one
+			const pushName = rawPushName || "Customer"; // display-only fallback for console logs
 
 			console.log(`\n📩 [Message Received] From: ${pushName} (+${senderNumber})`);
 			console.log(`💬 Text: "${trimmedText}"`);
@@ -126,7 +127,8 @@ async function startBaileysBot() {
 				const { reply, newSession } = await runAgent({
 					from: remoteJid,
 					userText: trimmedText,
-					session
+					session,
+					contactName: rawPushName
 				});
 				console.log(`⏱ Agent took ${Date.now() - t0}ms`);
 

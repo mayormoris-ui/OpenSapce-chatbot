@@ -29,6 +29,20 @@ function companyContext() {
 	};
 }
 
+// WhatsApp display names are sometimes a full name, sometimes a nickname or
+// even an emoji — using just the first whitespace-separated token reads
+// naturally in a greeting ("Hi Chidinma!") without assuming it's a real
+// first/last name split. If that token has no actual letters in it (e.g. an
+// emoji-led nickname like "🔥 Big Boss 🔥"), skip it rather than greet
+// someone with "Hi 🔥!".
+function firstNameOf(displayName) {
+	if (!displayName || typeof displayName !== "string") return null;
+	const trimmed = displayName.trim();
+	if (!trimmed) return null;
+	const token = trimmed.split(/\s+/)[0];
+	return /\p{L}/u.test(token) ? token : null;
+}
+
 // -------------------------------------------------------------
 // Flow 1: Dispute / Issue Reporting Slot Extraction & Questioning
 // -------------------------------------------------------------
@@ -166,12 +180,36 @@ function mergeDraft(draft, parsed, allowedKeys) {
 // -------------------------------------------------------------
 // Main Agent Handler
 // -------------------------------------------------------------
-export async function runAgent({ from, userText, session }) {
+// Returns true when the AI should address the user by name.
+// Rules: always on the first message, then once every NAME_INTERVAL messages.
+const NAME_INTERVAL = 4;
+function shouldUseName(session) {
+	const count = session.messageCount || 0; // 0-indexed before increment
+	return count === 0 || count % NAME_INTERVAL === 0;
+}
+
+export async function runAgent({ from, userText, session, contactName }) {
 	mustHaveEnv();
 	const model = process.env.GROQ_MODEL || process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
 	const info = companyContext();
 
 	if (!session.draft) session.draft = {};
+
+	// Remember the WhatsApp contact's name for the life of this session, even
+	// if a later message doesn't resend it (Twilio only sends ProfileName on
+	// some messages; Baileys usually sends pushName on every message but we
+	// don't want a one-off missing value to make the bot "forget" someone
+	// mid-conversation).
+	if (contactName && !session.contactName) {
+		session.contactName = contactName;
+	}
+	const displayName = firstNameOf(session.contactName);
+
+	// Determine whether this turn should address the user by name, then
+	// increment the counter so the next call gets the correct position.
+	const useName = displayName && shouldUseName(session);
+	session.messageCount = (session.messageCount || 0) + 1;
+
 	const history = (session.history || []).slice(-10);
 
 	// --- 1. Ongoing DISPUTE Flow Mode ---
@@ -207,6 +245,7 @@ export async function runAgent({ from, userText, session }) {
 		session.draft = {};
 
 		const msg =
+			(displayName ? `Thanks, ${displayName}! ` : "") +
 			`📋 *Support Ticket Logged Successfully*\n\n` +
 			`• *Ticket ID:* ${result.ticketId}\n` +
 			`• *Customer:* ${result.name}\n` +
@@ -251,6 +290,7 @@ export async function runAgent({ from, userText, session }) {
 		session.draft = {};
 
 		const msg =
+			(displayName ? `Thanks, ${displayName}! ` : "") +
 			`🚀 *Request Received*\n\n` +
 			`• *Reference ID:* ${result.inquiryId}\n` +
 			`• *Name:* ${result.name}\n` +
@@ -280,6 +320,12 @@ Contact & Operating details:
 - Phone: ${info.phone}
 - Support Hours: Mon–Fri 9:00 AM - 5:00 PM WAT
 - Current Support Availability: ${withinHours ? "ONLINE (Within Business Hours)" : "OFFLINE (Outside Business Hours)"}
+
+${useName
+	? `The user's first name is "${displayName}". You MUST address them by this name somewhere in your reply — naturally woven in (e.g. at the start of a greeting or at the end of a confirmation), not bolted on awkwardly.`
+	: displayName
+		? `The user's first name is "${displayName}". Do NOT use their name in this reply — keep it name-free to avoid repetition. Only address them by name on the first message, at closing confirmations, and every few messages.`
+		: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
 
 Identify user intent and return JSON only:
 {
@@ -322,7 +368,9 @@ Guidelines:
 			faqQuery: null,
 			txRef: null,
 			handoffSummary: null,
-			reply: `Welcome to ${info.name}! How can I assist you with your accounts, loans, investments, or transfers today?`
+			reply: displayName
+				? `Hi ${displayName}! 👋 Welcome to ${info.name}! How can I assist you with your accounts, loans, investments, or transfers today?`
+				: `Welcome to ${info.name}! How can I assist you with your accounts, loans, investments, or transfers today?`
 		};
 	}
 
@@ -400,6 +448,7 @@ Guidelines:
 			session.draft = {};
 
 			const msg =
+				(displayName ? `Thanks, ${displayName}! ` : "") +
 				`📋 *Support Ticket Logged (Ref: ${result.ticketId})*\n\n` +
 				`• *Name:* ${result.name}\n` +
 				`• *Issue:* ${result.description}\n` +
@@ -452,6 +501,7 @@ Guidelines:
 			session.draft = {};
 
 			const msg =
+				(displayName ? `Thanks, ${displayName}! ` : "") +
 				`🚀 *Inquiry Submitted (Ref: ${result.inquiryId})*\n\n` +
 				`• *Name:* ${result.name}\n` +
 				`• *Product:* ${result.serviceType}\n` +
@@ -471,8 +521,8 @@ Guidelines:
 		const result = await handoffToHumanStub({ from, summary });
 
 		const reply = result.available
-			? `👨‍💼 *Connecting to Support*\n\nI’m alerting our support team right now.\n• *Reference:* ${result.handoffId}\n• *Phone:* ${result.phone}\n• *Email:* ${result.email}\n\nPlease leave any additional details here and an agent will respond directly.`
-			: `🕒 *Support Outside Operating Hours*\n\nOur team is currently offline (Operating hours: Mon–Fri 9:00 AM - 5:00 PM WAT).\n• *Reference:* ${result.handoffId}\n• *Email:* ${result.email}\n\nPlease leave your message and email address here, and we will get back to you first thing when we open!`;
+			? `👨‍💼 *Connecting to Support*\n\n${displayName ? `Thanks ${displayName}, ` : ""}I’m alerting our support team right now.\n• *Reference:* ${result.handoffId}\n• *Phone:* ${result.phone}\n• *Email:* ${result.email}\n\nPlease leave any additional details here and an agent will respond directly.`
+			: `🕒 *Support Outside Operating Hours*\n\n${displayName ? `Thanks ${displayName}, our` : "Our"} team is currently offline (Operating hours: Mon–Fri 9:00 AM - 5:00 PM WAT).\n• *Reference:* ${result.handoffId}\n• *Email:* ${result.email}\n\nPlease leave your message and email address here, and we will get back to you first thing when we open!`;
 
 		session.history = [
 			...history,
@@ -484,10 +534,11 @@ Guidelines:
 	}
 
 	// F. Default Assistant Response
+	const defaultGreeting = displayName ? `Hi ${displayName}! 👋 Welcome to ${info.name}!` : `Welcome to ${info.name}!`;
 	const reply =
 		typeof plan.reply === "string" && plan.reply.trim()
 			? plan.reply.trim()
-			: `Welcome to ${info.name}! I can help you with:\n1. 💳 Account & Wallet Creation\n2. 🏢 Business Banking\n3. 💰 Personal & Business Loans\n4. 📍 Open Nearby & Open Invest\n5. ⚠️ Transaction Help & Disputes\n\nHow can I help you today?`;
+			: `${defaultGreeting} I can help you with:\n1. 💳 Account & Wallet Creation\n2. 🏢 Business Banking\n3. 💰 Personal & Business Loans\n4. 📍 Open Nearby & Open Invest\n5. ⚠️ Transaction Help & Disputes\n\nHow can I help you today?`;
 
 	session.history = [
 		...history,

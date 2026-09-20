@@ -6,6 +6,10 @@ const sessionState = new Map();
  * {
  *   history: OpenAI chat messages (rolling window),
  *   flow: null | "DISPUTE" | "INQUIRY",
+ *   contactName: string | null, // WhatsApp display name (Baileys pushName /
+ *                                // Twilio ProfileName), remembered for the
+ *                                // life of the session so replies can greet
+ *                                // the user by name.
  *   draft: {
  *     // For DISPUTE flow:
  *     issueType?: string,
@@ -37,6 +41,7 @@ export function getSession(userId) {
 		sessionState.get(userId) ?? {
 			history: [],
 			flow: null,
+			contactName: null,
 			draft: {}
 		}
 	);

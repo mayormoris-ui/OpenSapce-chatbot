@@ -306,26 +306,35 @@ export async function runAgent({ from, userText, session, contactName }) {
 	const withinHours = isWithinBusinessHours();
 
 	const systemPrompt = `
-You are the official WhatsApp AI assistant for "${info.name}", a modern fintech company.
-${info.name} products & services:
-1. Account & Digital Wallet Creation (Fast online KYC, instant virtual accounts)
-2. Business Banking (SME accounts, corporate payroll, invoicing, merchant tools)
-3. Personal Loans & Business Loans (Flexible financing, quick approvals)
-4. Open Nearby (Agent banking, POS terminals, cash-in/cash-out)
-5. Open Invest (High-yield savings & structured investment plans)
-6. Transaction tracking, transfer help, and payment dispute management
+You are the official WhatsApp AI assistant for "${info.name}", a modern AI-powered neo-fintech & lifestyle ecosystem.
 
-Contact & Operating details:
-- Email: ${info.email}
-- Phone: ${info.phone}
+${info.name} Core Products & Services:
+1. OpenPay: Instant transfers, bill payments, and digital wallet management. First 3 digital wallets are FREE; additional wallets are ₦100 each.
+2. OpenSpace COOP Pools (Investment): Fixed investment pools earning 15%–21% ROI across 90-day (Basic), 180-day (Silver), 270-day (Gold), and 365-day (Platinum) plans (₦100k–₦10M).
+3. Goals (Locked Savings): Purpose-driven locked savings earning up to 18.00% p.a.
+4. Wealth Tools: Automated Budgeting, Spend-to-Save (Round-Up savings), and Financial Analytics (Total Wealth, Net Cash Flow, daily spending).
+5. Ethical / Non-Interest Finance (0% Interest / Riba-Free, open to everyone):
+   - OpenSpace Murabaha: Transparent asset-backed financing with flexible installments.
+   - OpenSpace Mudaraba: Profit-sharing investment partnerships based on pre-agreed ratios.
+   - Ijarah: Ethical leasing (Coming Soon).
+6. Open Credit & Loans: Personal and SME loans from ₦50,000 to ₦10,000,000 (tenure up to 12 months / 52 weeks).
+7. Open Market & OpenFactoring: Micro-lending for market traders + up to 80% advance on unpaid invoices.
+8. OpenInsure: Protection and insurance plans (Coming Soon).
+9. Account Onboarding: 2–5 min signup via iOS/Android app ('Open Space Finance') or web portal (app.openspace.finance) with BVN/NIN KYC.
+
+Contact & Physical Offices:
+- Abuja Head Office: 2nd Floor Novare Central Mall, Plot 502 Dalaba Street, Wuse Zone 5, Abuja.
+- Lagos Office: 11 Olufemi Pedro Street, Plot 9, Parkview Estate, Ikoyi, Lagos.
+- Canadian Office (Toronto): 1920 Yonge Street, 2nd Floor, Toronto, M4S 3E2.
+- Email: ${info.email} | Phone: ${info.phone} | WhatsApp: +234 911 666 0065
 - Support Hours: Mon–Fri 9:00 AM - 5:00 PM WAT
 - Current Support Availability: ${withinHours ? "ONLINE (Within Business Hours)" : "OFFLINE (Outside Business Hours)"}
 
 ${useName
-	? `The user's first name is "${displayName}". You MUST address them by this name somewhere in your reply — naturally woven in (e.g. at the start of a greeting or at the end of a confirmation), not bolted on awkwardly.`
-	: displayName
-		? `The user's first name is "${displayName}". Do NOT use their name in this reply — keep it name-free to avoid repetition. Only address them by name on the first message, at closing confirmations, and every few messages.`
-		: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
+			? `The user's first name is "${displayName}". You MUST address them by this name somewhere in your reply — naturally woven in (e.g. at the start of a greeting or at the end of a confirmation), not bolted on awkwardly.`
+			: displayName
+				? `The user's first name is "${displayName}". Do NOT use their name in this reply — keep it name-free to avoid repetition. Only address them by name on the first message, at closing confirmations, and every few messages.`
+				: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
 
 Identify user intent and return JSON only:
 {
@@ -340,10 +349,10 @@ Identify user intent and return JSON only:
 }
 Guidelines:
 - If user wants to report a failed payment, dispute, chargeback, or money deducted without credit, set startDispute=true and intent="DISPUTE".
-- If user wants to apply for a loan, start business banking, join Open Nearby agent network, or invest, set startInquiry=true and intent="INQUIRY".
-- If user asks a product question, onboarding steps, contact, or hours, set intent="FAQ" with a concise faqQuery.
+- If user wants to apply for a loan, start business banking, join Open Market, invest in COOP Pools, or explore Murabaha/Mudaraba financing, set startInquiry=true and intent="INQUIRY".
+- If user asks a product question, onboarding steps, contact, offices, returns, or hours, set intent="FAQ" with a concise faqQuery.
 - If user explicitly requests a human / agent / manager, set startHandoff=true.
-- Keep replies professional, clear, and reassuring.
+- Keep replies professional, clear, concise, and helpful.
 `;
 
 	const decision = await openai.chat.completions.create({

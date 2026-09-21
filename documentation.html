@@ -1,0 +1,395 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>OpenSpace WhatsApp AI Assistant - System Design & Documentation</title>
+<style>
+  @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700;800&family=JetBrains+Mono:wght@400;500;600&display=swap');
+
+  @page {
+    size: A4;
+    margin: 20mm 15mm 20mm 15mm;
+  }
+
+  * {
+    box-sizing: border-box;
+    margin: 0;
+    padding: 0;
+  }
+
+  body {
+    font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+    color: #1e293b;
+    background-color: #ffffff;
+    line-height: 1.6;
+    font-size: 13.5px;
+    padding: 30px 40px;
+  }
+
+  .header-container {
+    border-bottom: 2px solid #0284c7;
+    padding-bottom: 20px;
+    margin-bottom: 28px;
+    display: flex;
+    justify-content: space-between;
+    align-items: flex-start;
+  }
+
+  .title-area h1 {
+    font-size: 26px;
+    font-weight: 800;
+    color: #0f172a;
+    letter-spacing: -0.5px;
+    margin-bottom: 6px;
+  }
+
+  .title-area .subtitle {
+    font-size: 15px;
+    color: #0284c7;
+    font-weight: 600;
+  }
+
+  .meta-badge {
+    background: #f1f5f9;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 10px 14px;
+    text-align: right;
+    font-size: 11.5px;
+    color: #475569;
+  }
+
+  .badge-tag {
+    display: inline-block;
+    background: #e0f2fe;
+    color: #0369a1;
+    padding: 2px 8px;
+    border-radius: 4px;
+    font-weight: 600;
+    font-size: 11px;
+    margin-top: 4px;
+  }
+
+  h2 {
+    font-size: 17px;
+    font-weight: 700;
+    color: #0f172a;
+    margin-top: 24px;
+    margin-bottom: 12px;
+    padding-bottom: 6px;
+    border-bottom: 1px solid #e2e8f0;
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+
+  h3 {
+    font-size: 14.5px;
+    font-weight: 600;
+    color: #1e293b;
+    margin-top: 16px;
+    margin-bottom: 8px;
+  }
+
+  p {
+    margin-bottom: 12px;
+    color: #334155;
+  }
+
+  ul, ol {
+    margin-left: 20px;
+    margin-bottom: 14px;
+    color: #334155;
+  }
+
+  li {
+    margin-bottom: 5px;
+  }
+
+  table {
+    width: 100%;
+    border-collapse: collapse;
+    margin: 14px 0 20px 0;
+    font-size: 12.5px;
+  }
+
+  th, td {
+    padding: 9px 12px;
+    text-align: left;
+    border: 1px solid #e2e8f0;
+  }
+
+  th {
+    background-color: #f8fafc;
+    font-weight: 600;
+    color: #0f172a;
+  }
+
+  tr:nth-child(even) {
+    background-color: #f8fafc;
+  }
+
+  .code-box {
+    background: #0f172a;
+    color: #f8fafc;
+    border-radius: 8px;
+    padding: 14px 18px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11.5px;
+    line-height: 1.5;
+    margin: 14px 0 18px 0;
+    overflow-x: auto;
+    white-space: pre;
+  }
+
+  .diagram-box {
+    background: #f8fafc;
+    border: 1px solid #cbd5e1;
+    border-radius: 8px;
+    padding: 16px;
+    font-family: 'JetBrains Mono', monospace;
+    font-size: 11px;
+    line-height: 1.35;
+    margin: 16px 0 20px 0;
+    color: #0f172a;
+    white-space: pre;
+    background: #f1f5f9;
+  }
+
+  .card-grid {
+    display: grid;
+    grid-template-columns: repeat(2, 1fr);
+    gap: 12px;
+    margin: 14px 0 18px 0;
+  }
+
+  .card {
+    border: 1px solid #e2e8f0;
+    border-radius: 8px;
+    padding: 12px 14px;
+    background: #ffffff;
+    box-shadow: 0 1px 2px rgba(0,0,0,0.04);
+  }
+
+  .card-title {
+    font-weight: 600;
+    color: #0369a1;
+    font-size: 13px;
+    margin-bottom: 4px;
+  }
+
+  .card-desc {
+    font-size: 12px;
+    color: #475569;
+  }
+
+  .page-break {
+    page-break-before: always;
+  }
+
+  .footer {
+    margin-top: 30px;
+    padding-top: 14px;
+    border-top: 1px solid #e2e8f0;
+    font-size: 11px;
+    color: #94a3b8;
+    display: flex;
+    justify-content: space-between;
+  }
+</style>
+</head>
+<body>
+
+<div class="header-container">
+  <div class="title-area">
+    <h1>OpenSpace Fintech WhatsApp Bot</h1>
+    <div class="subtitle">System Design, Architecture & Workflow Documentation</div>
+  </div>
+  <div class="meta-badge">
+    <div><strong>Company:</strong> OpenSpace</div>
+    <div><strong>Stack:</strong> Node.js • Baileys • Groq LLM</div>
+    <span class="badge-tag">Production Ready</span>
+  </div>
+</div>
+
+<h2>1. Executive Summary</h2>
+<p>
+  The <strong>OpenSpace WhatsApp AI Assistant</strong> is an enterprise-grade automated agent designed to provide instant, 24/7 financial support, onboarding assistance, loan intake, agent banking guidance, and dispute management for <strong>OpenSpace</strong> customers via WhatsApp.
+</p>
+<p>
+  By pairing <strong>Baileys (direct WhatsApp Web multi-device WebSocket protocol)</strong> with high-performance LLM inference via the <strong>Groq API</strong>, the bot delivers sub-second response times with zero monthly API markup fees, strict slot-filling state machines, and complete data privacy.
+</p>
+
+<h2>2. Technology Stack</h2>
+<table>
+  <thead>
+    <tr>
+      <th>Layer</th>
+      <th>Technology</th>
+      <th>Description / Role</th>
+    </tr>
+  </thead>
+  <tbody>
+    <tr>
+      <td><strong>Runtime</strong></td>
+      <td>Node.js (ES Modules)</td>
+      <td>Asynchronous, non-blocking runtime handling WebSockets and AI requests.</td>
+    </tr>
+    <tr>
+      <td><strong>WhatsApp Connector</strong></td>
+      <td><code>@whiskeysockets/baileys</code></td>
+      <td>Lightweight, browserless WhatsApp Web protocol engine with multi-device persistence.</td>
+    </tr>
+    <tr>
+      <td><strong>AI / LLM Engine</strong></td>
+      <td>Groq Cloud (<code>openai/gpt-oss-120b</code>)</td>
+      <td>High-speed open-source Large Language Model for intent classification & JSON extraction.</td>
+    </tr>
+    <tr>
+      <td><strong>AI Client Interface</strong></td>
+      <td><code>openai</code> SDK</td>
+      <td>Universal client interface configured with Groq base URL for low-latency inference.</td>
+    </tr>
+    <tr>
+      <td><strong>Knowledge Engine</strong></td>
+      <td>Deterministic Regex & Template Engine</td>
+      <td>Pre-compiled regex pattern matching in <code>faq.json</code> with dynamic environment replacement.</td>
+    </tr>
+    <tr>
+      <td><strong>Session Memory</strong></td>
+      <td>In-Memory Rolling State</td>
+      <td>Tracks 10-turn message history, active multi-turn flows (<code>DISPUTE</code>, <code>INQUIRY</code>), and entity drafts.</td>
+    </tr>
+    <tr>
+      <td><strong>Timezone / Hours</strong></td>
+      <td><code>Intl.DateTimeFormat</code></td>
+      <td>West Africa Time (<code>Africa/Lagos</code>) business hours validator (Mon–Fri 09:00–17:00).</td>
+    </tr>
+  </tbody>
+</table>
+
+<h2>3. High-Level Architecture</h2>
+<div class="diagram-box">
+                               ┌─────────────────────────────────────────┐
+                               │             WhatsApp User               │
+                               └────────────────────┬────────────────────┘
+                                                    │
+                                         (WhatsApp Protocol / E2EE)
+                                                    │
+                                                    ▼
+                               ┌─────────────────────────────────────────┐
+                               │      Transport Layer (src/baileys.js)   │
+                               │     - Multi-File Auth State             │
+                               │     - Message Ingestion & Typing Events │
+                               │     - Outbound Reply Dispatch           │
+                               └────────────────────┬────────────────────┘
+                                                    │
+                                                    ▼
+                               ┌─────────────────────────────────────────┐
+                               │       Agent Orchestrator (src/agent.js) │
+                               │     - Intent Classification             │
+                               │     - Structured Slot Filling           │
+                               │     - System Prompt & Personas          │
+                               └──────┬──────────────┬─────────────┬─────┘
+                                      │              │             │
+                 ┌────────────────────┘              │             └───────────────────┐
+                 ▼                                   ▼                                 ▼
+┌─────────────────────────────────┐ ┌────────────────────────────────┐ ┌────────────────────────────────┐
+│ Knowledge Base (data/faq.json)  │ │ Business Tools (src/tools.js)  │ │ Session Store (src/store.js)   │
+│ - 12+ Fintech FAQ Rules         │ │ - Support Ticket Generation    │ │ - 10-turn Rolling Context      │
+│ - Regex Pattern Matching        │ │ - Product Inquiry Leads        │ │ - Active Flow Machine          │
+│ - Variable Interpolation        │ │ - Transaction Status Lookup    │ │ - Entity Draft Records         │
+│ - Zero-LLM Instant Hits         │ │ - Human Agent Escalation       │ │ - Idempotency Message IDs      │
+└─────────────────────────────────┘ └────────────────┬───────────────┘ └────────────────────────────────┘
+                                                     │
+                                                     ▼
+                                    ┌────────────────────────────────┐
+                                    │ Business Hours (src/bizHours.js│
+                                    │ - WAT (Africa/Lagos) Timezone  │
+                                    │ - Mon-Fri 09:00 - 17:00        │
+                                    └────────────────────────────────┘
+</div>
+
+<div class="page-break"></div>
+
+<h2>4. Core Product Workflows & Capabilities</h2>
+
+<div class="card-grid">
+  <div class="card">
+    <div class="card-title">💳 Account & Wallet Creation</div>
+    <div class="card-desc">Guides users through fast onboarding, BVN/NIN/ID KYC verification, and instant virtual account creation.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">🏢 Business Banking</div>
+    <div class="card-desc">Handles inquiries for corporate accounts, invoicing tools, payroll automation, and merchant APIs.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">💰 Personal & Business Loans</div>
+    <div class="card-desc">Interactive intake capturing loan amount, business type, and applicant info to issue a <code>REQ-xxxxxx</code> lead.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📍 Open Nearby (Agency Banking)</div>
+    <div class="card-desc">Explains cash-in/cash-out agency points, POS deployment, and agent onboarding steps.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">📈 Open Invest</div>
+    <div class="card-desc">Details high-yield savings plans, locked deposits, and structured investment yields.</div>
+  </div>
+  <div class="card">
+    <div class="card-title">⚠️ Dispute & Issue Resolution</div>
+    <div class="card-desc">Guided slot filling for failed transfers or double debits, generating a trackable <code>TKT-xxxxxx</code> ticket.</div>
+  </div>
+</div>
+
+<h2>5. Conversational Flow & State Machine</h2>
+<p>The assistant employs a multi-tiered routing process to resolve user intent:</p>
+<ol>
+  <li><strong>Direct Pattern Matching:</strong> Incoming queries are evaluated against <code>data/faq.json</code> regexes. If a direct match is found (e.g., support hours, contact info), the templated answer is returned instantly without querying the LLM.</li>
+  <li><strong>Intent Classification (LLM):</strong> Unmatched queries are processed by the LLM in structured JSON mode to categorize user intent:
+    <ul>
+      <li><code>DISPUTE</code> $\rightarrow$ Enters multi-turn dispute flow.</li>
+      <li><code>INQUIRY</code> $\rightarrow$ Enters multi-turn loan/product application flow.</li>
+      <li><code>TX_STATUS</code> $\rightarrow$ Executes transaction status stub.</li>
+      <li><code>HANDOFF</code> $\rightarrow$ Checks business hours and escalates to human agents.</li>
+      <li><code>GENERAL</code> $\rightarrow$ Returns conversational AI answer.</li>
+    </ul>
+  </li>
+  <li><strong>Slot-Filling Guided State Machine:</strong> If inside a flow, the agent prompts for missing fields one-by-one (Amount, Reference, Name, Email) and confirms completion with an official reference ID.</li>
+</ol>
+
+<h2>6. Security, Compliance & Deployment</h2>
+<ul>
+  <li><strong>Zero Hardcoded Credentials:</strong> All keys and endpoints are configured exclusively in <code>.env</code>.</li>
+  <li><strong>Private Auth State:</strong> The WhatsApp session directory (<code>auth_info_baileys/</code>) is excluded from version control in <code>.gitignore</code>.</li>
+  <li><strong>Operating Schedule:</strong> Built-in awareness of West Africa Time (WAT) operating hours with automatic offline escalation.</li>
+</ul>
+
+<h2>7. Environment Variables Reference</h2>
+<div class="code-box">
+# AI Inference (Groq Cloud)
+GROQ_API_KEY=gsk_xxxxxxxxxxxxxxxxxxxxxxxxxxxxxxxx
+GROQ_MODEL=openai/gpt-oss-120b
+
+# WhatsApp Pairing (Optional for Code Pairing)
+BOT_PHONE_NUMBER=234xxxxxxxxxx
+
+# Company Identity
+COMPANY_NAME=OpenSpace
+COMPANY_EMAIL=hello@openspace.finance
+COMPANY_PHONE=+234 201 3309 599
+COMPANY_WEBSITE=https://openspace.finance
+COMPANY_TIMEZONE=Africa/Lagos
+
+# Business Operating Hours
+BIZ_HOURS_MON_FRI=09:00-17:00
+BIZ_HOURS_SAT=CLOSED
+BIZ_HOURS_SUN=CLOSED
+</div>
+
+<div class="footer">
+  <div>OpenSpace Financial Technologies • Confidential & Proprietary</div>
+  <div>Generated on September 17, 2026</div>
+</div>
+
+</body>
+</html>

@@ -275,6 +275,11 @@ export async function runAgent({ from, userText, session, contactName, mediaInfo
 
 	// --- 1. Ongoing DISPUTE Flow Mode ---
 	if (session.flow === "DISPUTE") {
+		if (mediaInfo) {
+			session.draft.receiptProvided = true;
+			session.draft.receiptUrl = mediaInfo.url || `whatsapp-media:${mediaInfo.mediaKey || "received"}`;
+		}
+
 		const parsed = await extractDisputeFields({ model, userText });
 
 		if (parsed.cancel) {
@@ -569,6 +574,10 @@ Guidelines:
 	if (plan.startDispute || plan.intent === "DISPUTE") {
 		session.flow = "DISPUTE";
 		const existingDraft = session.draft || {};
+		if (mediaInfo) {
+			existingDraft.receiptProvided = true;
+			existingDraft.receiptUrl = mediaInfo.url || `whatsapp-media:${mediaInfo.mediaKey || "received"}`;
+		}
 
 		const initialParsed = await extractDisputeFields({ model, userText });
 		if (initialParsed.cancel) {

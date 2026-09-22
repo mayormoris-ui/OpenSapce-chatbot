@@ -31,8 +31,16 @@ app.post(["/twilio/whatsapp", "/tw", "/webhook"], async (req, res) => {
 
 		const messageSid = req.body.MessageSid;
 		const from = req.body.From; // "whatsapp:+..."
-		const body = (req.body.Body || "").trim();
+		const rawBody = (req.body.Body || "").trim();
 		const profileName = req.body.ProfileName || null; // WhatsApp display name, when Twilio has it
+
+		const numMedia = parseInt(req.body.NumMedia || "0", 10);
+		const mediaUrl = req.body.MediaUrl0 || null;
+		const mediaInfo = (numMedia > 0 || mediaUrl)
+			? { url: mediaUrl, mimetype: req.body.MediaContentType0 || "image/jpeg", label: "[Image/Receipt received]" }
+			: null;
+
+		const body = rawBody || (mediaInfo ? "[receipt image sent]" : "");
 
 		if (!from) {
 			return res.status(400).send("Bad request: Missing 'From' field.");
@@ -57,9 +65,17 @@ app.post(["/twilio/whatsapp", "/tw", "/webhook"], async (req, res) => {
 		}
 
 		const session = getSession(from);
+
+		// If a DISPUTE is in progress and user attached media, mark receipt provided immediately
+		if (mediaInfo && session.flow === "DISPUTE") {
+			session.draft = session.draft || {};
+			session.draft.receiptUrl = mediaInfo.url || "Provided via WhatsApp Media";
+			session.draft.receiptProvided = true;
+		}
+
 		console.log(`[🤖 Generating AI Response...]`);
 		const t0 = Date.now();
-		const { reply, newSession } = await runAgent({ from, userText: body, session, contactName: profileName });
+		const { reply, newSession } = await runAgent({ from, userText: body, session, contactName: profileName, mediaInfo });
 		console.log(`[⏱ Agent took ${Date.now() - t0}ms]`);
 		//const { reply, newSession } = await runAgent({ from, userText: body, session });
 

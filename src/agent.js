@@ -541,6 +541,13 @@ Guidelines:
 	if (plan.intent === "TX_STATUS" && plan.txRef) {
 		const statusResult = await checkTransactionStatusStub({ txRef: plan.txRef });
 		if (statusResult) {
+			// Save fetched transaction details in session draft so they persist if user disputes
+			session.draft = {
+				...(session.draft || {}),
+				transactionRef: statusResult.txRef,
+				amount: statusResult.amount
+			};
+
 			const reply =
 				`🔍 *Transaction Status Lookup*\n` +
 				`• *Reference:* ${statusResult.txRef}\n` +
@@ -561,7 +568,7 @@ Guidelines:
 	// C. Start Dispute Flow
 	if (plan.startDispute || plan.intent === "DISPUTE") {
 		session.flow = "DISPUTE";
-		session.draft = {};
+		const existingDraft = session.draft || {};
 
 		const initialParsed = await extractDisputeFields({ model, userText });
 		if (initialParsed.cancel) {
@@ -572,7 +579,7 @@ Guidelines:
 			return { reply, newSession: session };
 		}
 
-		session.draft = mergeDraft({}, initialParsed, [
+		session.draft = mergeDraft(existingDraft, initialParsed, [
 			"issueType",
 			"transactionRef",
 			"amount",

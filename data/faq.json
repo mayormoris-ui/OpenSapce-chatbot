@@ -156,20 +156,38 @@
       "answer": "💰 *Open Credit & Loans:*\nAccess transparent, responsible credit with fast approvals:\n• *Loan Range:* ₦50,000 – ₦10,000,000\n• *Tenure:* Up to 12 months (52 weeks)\n• *Requirements:* Active OpenSpace account, completed KYC, and verified transaction history.\n\nTo apply, share your desired loan amount and purpose, and our team will guide you!"
     },
     {
-      "id": "open_market_and_factoring",
+      "id": "open_market",
       "patterns": [
         "open market",
         "openmarket",
         "market women",
+        "market trader",
+        "petty trader",
         "trader loan",
+        "market loan",
         "micro lending",
-        "sme loan",
+        "micro loan",
+        "explain open market",
+        "tell me about open market",
+        "what is open market"
+      ],
+      "answer": "🏪 *Open Market (Trader Micro-Lending & Growth):*\n\nOpen Market is tailored specifically for market women, retail merchants, and petty traders to expand their business:\n\n• 💰 *Working Capital Loans:* Quick, accessible micro-loans from ₦20,000 up to ₦1,000,000 with flexible daily or weekly repayments matching market trade cycles.\n• 📚 *Free Financial Literacy Training:* Practical coaching on business cash management, profit calculation, and reinvestment.\n• 📱 *Digital Bookkeeping:* Easy-to-use mobile record management software to track stock and daily sales.\n• 🚀 *No Heavy Collateral:* Designed to empower everyday market entrepreneurs.\n\nWould you like to apply for Open Market or learn more about opening an account?"
+    },
+    {
+      "id": "open_factoring",
+      "patterns": [
         "factoring",
         "openfactoring",
+        "open factoring",
         "invoice factoring",
-        "unpaid invoice"
+        "invoice advance",
+        "unpaid invoice",
+        "explain factoring",
+        "explain open factoring",
+        "what is factoring",
+        "what is open factoring"
       ],
-      "answer": "🏪 *SME & Market Trader Solutions:*\n\n• 🛒 *Open Market:* Fast micro-lending and working capital designed for market women, petty traders, and retail merchants, accompanied by free financial literacy training and business record software.\n• 📄 *OpenFactoring:* Unlock immediate cash flow by getting an upfront advance of *up to 80%* on unpaid client invoices (no waiting for 30–90 day billing cycles)."
+      "answer": "📄 *OpenFactoring (Invoice Cash Flow Financing):*\n\nNever wait 30–90 days for client payments again. OpenFactoring unlocks your working capital instantly:\n\n• ⚡ *Up to 80% Advance:* Receive an immediate advance of up to 80% of verified, unpaid corporate or government client invoices within 24–48 hours.\n• 💼 *Smoothen Cash Flow:* Fund payroll, pay vendors, and accept new client orders without cash flow bottlenecks.\n• 🤝 *Balance Payment:* The remaining invoice balance (less a small processing fee) is remitted to you once your client settles.\n\nWould you like to speak to a specialist or apply for OpenFactoring?"
     },
     {
       "id": "account_onboarding_guide",

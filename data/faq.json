@@ -1,5 +1,5 @@
 {
-  "version": 1,
+  "version": 2,
   "entries": [
     {
       "id": "hours",
@@ -12,10 +12,10 @@
         "business hours",
         "work hours"
       ],
-      "answer": "Our customer support hours are:\nMon\u2013Fri: ${BIZ_HOURS_MON_FRI} (WAT)\nWeekends: Closed\n(Timezone: ${COMPANY_TIMEZONE})\n\nYou can also reach us via email at ${COMPANY_EMAIL} anytime."
+      "answer": "Our customer support hours are:\nMon–Fri: ${BIZ_HOURS_MON_FRI} (WAT)\nWeekends: Closed\n(Timezone: ${COMPANY_TIMEZONE})\n\nOur WhatsApp AI assistant is available 24/7. You can also reach our team via email at ${COMPANY_EMAIL} anytime."
     },
     {
-      "id": "contact",
+      "id": "contact_and_offices",
       "patterns": [
         "contact",
         "phone",
@@ -26,9 +26,30 @@
         "support number",
         "help desk",
         "office address",
+        "head office",
+        "lagos office",
+        "abuja office",
+        "location",
+        "where are you located",
+        "address",
         "website"
       ],
-      "answer": "You can reach ${COMPANY_NAME} via:\n\ud83d\udce7 Email: ${COMPANY_EMAIL}\n\ud83d\udcde Phone: ${COMPANY_PHONE}\n\ud83c\udf10 Website: ${COMPANY_WEBSITE}\n\ud83d\udd52 Support Hours: Mon\u2013Fri 9am\u20135pm WAT"
+      "answer": "You can reach ${COMPANY_NAME} via:\n📧 Email: ${COMPANY_EMAIL}\n📞 Phone: ${COMPANY_PHONE}\n💬 WhatsApp: +234 911 666 0065\n🌐 Website: ${COMPANY_WEBSITE}\n\n📍 *Our Physical Offices:*\n• *Head Office (Abuja):* 2nd Floor Novare Central Mall, Plot 502 Dalaba Street, Wuse Zone 5, Abuja.\n• *Lagos Office:* 11 Olufemi Pedro Street, Plot 9, Parkview Estate, Ikoyi, Lagos.\n• *Canadian Office (Toronto):* 1920 Yonge Street, 2nd Floor, Toronto, M4S 3E2."
+    },
+    {
+      "id": "app_download",
+      "patterns": [
+        "download",
+        "get the app",
+        "app link",
+        "google play",
+        "app store",
+        "ios",
+        "android",
+        "install app",
+        "mobile app"
+      ],
+      "answer": "📲 *Get the OpenSpace App:*\n• *iOS (App Store):* Search 'Open Space Finance' on the Apple App Store.\n• *Android (Google Play):* Search 'OpenSpace Finance' on Google Play.\n• *Web Portal:* Access directly at https://app.openspace.finance"
     },
     {
       "id": "services_overview",
@@ -39,100 +60,164 @@
         "about openspace",
         "what is openspace",
         "what can you do",
-        "features"
+        "features",
+        "offerings"
       ],
-      "answer": "${COMPANY_NAME} offers comprehensive fintech solutions:\n1. \ud83d\udcb3 Account & Digital Wallet Creation\n2. \ud83c\udfe2 Business Banking & Corporate Accounts\n3. \ud83d\udcb0 Personal & Business Loans\n4. \ud83d\udccd Open Nearby (Agent Banking / Cash-In & Cash-Out)\n5. \ud83d\udcc8 Open Invest (High-yield Savings & Investments)\n\nLet me know which product you would like to explore!"
+      "answer": "🌟 *${COMPANY_NAME}* is an AI-powered neo-fintech & lifestyle ecosystem offering:\n\n1. 💳 *OpenPay:* Multi-wallet digital banking, instant transfers & bill payments (First 3 wallets FREE!).\n2. 📈 *OpenSpace COOP Pools:* Fixed investment pools earning 15%–21% returns.\n3. 🎯 *Goals (Locked Savings):* Goal-oriented locked savings earning up to 18.00% p.a.\n4. 🔄 *Spend to Save & Budgeting:* Automated round-up savings & proactive spending alerts.\n5. 🤝 *Ethical / Non-Interest Finance:* Sharia-compliant, interest-free Murabaha (Asset Financing) & Mudaraba (Profit Sharing).\n6. 💰 *Open Credit & Loans:* Flexible personal & business loans from ₦50,000 up to ₦10,000,000.\n7. 🏪 *Open Market & OpenFactoring:* Micro-lending for market traders & up to 80% invoice advance.\n8. 🛡️ *OpenInsure (Coming Soon):* Simple protection plans for health, life & assets.\n\nWhich product would you like to explore?"
     },
     {
-      "id": "account_wallet_creation",
+      "id": "openpay_wallets",
+      "patterns": [
+        "openpay",
+        "wallet",
+        "wallets",
+        "wallet fee",
+        "how many wallets",
+        "create wallet",
+        "multiple wallets"
+      ],
+      "answer": "💳 *OpenPay & Wallet Management:*\n• Send and receive instant money transfers seamlessly.\n• Pay bills, utility tokens, and merchant checkout.\n• *Multi-Wallet Creation:* Your first *3 digital wallets are 100% FREE*! Additional wallets cost only ₦100 each to help you organize funds across different goals."
+    },
+    {
+      "id": "coop_pools_investment",
+      "patterns": [
+        "coop pool",
+        "coop",
+        "investment pools",
+        "invest",
+        "investment",
+        "investment plans",
+        "returns",
+        "interest rate on investment",
+        "yield",
+        "open invest"
+      ],
+      "answer": "📈 *OpenSpace COOP Pools (Flexible Investment Plans):*\nEarn *15% – 21% returns* with structured, professionally managed cooperative pools:\n\n• *Basic Pool:* 90 Days (15%–21% ROI)\n• *Silver Pool:* 180 Days (15%–21% ROI)\n• *Gold Pool:* 270 Days (15%–21% ROI)\n• *Platinum Pool:* 365 Days (15%–21% ROI)\n\n💰 *Investment Range:* ₦100,000 – ₦10,000,000\n📱 Track your investment growth in real-time on the OpenPay App!"
+    },
+    {
+      "id": "goals_locked_savings",
+      "patterns": [
+        "goals",
+        "locked savings",
+        "lock money",
+        "save target",
+        "target savings",
+        "fixed savings",
+        "18%",
+        "goals interest"
+      ],
+      "answer": "🎯 *Goals (Locked Savings):*\n• Save with purpose by locking funds toward specific milestones (Rent, Business Expansion, School Fees, Travel).\n• Earn up to *18.00% interest per year* on locked funds.\n• *Discipline & Security:* Funds remain locked until target maturity to help you reach your goals. (Early withdrawal before maturity incurs a fee)."
+    },
+    {
+      "id": "spend_to_save_and_budgeting",
+      "patterns": [
+        "spend to save",
+        "round up",
+        "auto save",
+        "automated savings",
+        "budget",
+        "budgeting",
+        "wealth tools",
+        "analytics"
+      ],
+      "answer": "⚙️ *OpenSpace Wealth Tools:*\n• 🔄 *Spend to Save:* Automatically save money in the background every time you spend (e.g. Round-Up transactions to nearest ₦100 and save the spare change).\n• 📊 *Automated Budgeting:* Set category limits and receive proactive notifications before you overspend.\n• 📈 *Financial Analytics:* Track Total Wealth, Net Cash Flow, and daily average spending in one unified dashboard."
+    },
+    {
+      "id": "ethical_non_interest_finance",
+      "patterns": [
+        "ethical",
+        "non-interest",
+        "non interest",
+        "halal",
+        "islamic",
+        "riba",
+        "murabaha",
+        "mudaraba",
+        "ijarah",
+        "interest free",
+        "sharia"
+      ],
+      "answer": "🌱 *Ethical / Non-Interest Finance (Built for Everyone):*\nOperates completely without interest (riba), based on transparency, fairness, real asset backing, and risk-sharing. Open to all individuals regardless of background or religion:\n\n• 📦 *OpenSpace Murabaha (Asset Financing):* We purchase business equipment/goods on your behalf; you buy them back at a transparent, pre-agreed fixed markup in flexible installments (0% interest).\n• 🤝 *OpenSpace Mudaraba (Profit-Sharing):* Capital providers partner with entrepreneurs to share business profits based on pre-agreed ratios.\n• 🚗 *Ijarah (Ethical Leasing):* Asset leasing structures for productive equipment (Coming Soon)."
+    },
+    {
+      "id": "open_credit_loans",
+      "patterns": [
+        "loan",
+        "loans",
+        "credit",
+        "open credit",
+        "borrow",
+        "quick loan",
+        "personal loan",
+        "business loan",
+        "loan limit",
+        "how much can i borrow"
+      ],
+      "answer": "💰 *Open Credit & Loans:*\nAccess transparent, responsible credit with fast approvals:\n• *Loan Range:* ₦50,000 – ₦10,000,000\n• *Tenure:* Up to 12 months (52 weeks)\n• *Requirements:* Active OpenSpace account, completed KYC, and verified transaction history.\n\nTo apply, share your desired loan amount and purpose, and our team will guide you!"
+    },
+    {
+      "id": "open_market",
+      "patterns": [
+        "open market",
+        "openmarket",
+        "market women",
+        "market trader",
+        "petty trader",
+        "trader loan",
+        "market loan",
+        "micro lending",
+        "micro loan",
+        "explain open market",
+        "tell me about open market",
+        "what is open market"
+      ],
+      "answer": "🏪 *Open Market (Trader Micro-Lending & Growth):*\n\nOpen Market is tailored specifically for market women, retail merchants, and petty traders to expand their business:\n\n• 💰 *Working Capital Loans:* Quick, accessible micro-loans from ₦20,000 up to ₦1,000,000 with flexible daily or weekly repayments matching market trade cycles.\n• 📚 *Free Financial Literacy Training:* Practical coaching on business cash management, profit calculation, and reinvestment.\n• 📱 *Digital Bookkeeping:* Easy-to-use mobile record management software to track stock and daily sales.\n• 🚀 *No Heavy Collateral:* Designed to empower everyday market entrepreneurs.\n\nWould you like to apply for Open Market or learn more about opening an account?"
+    },
+    {
+      "id": "open_factoring",
+      "patterns": [
+        "factoring",
+        "openfactoring",
+        "open factoring",
+        "invoice factoring",
+        "invoice advance",
+        "unpaid invoice",
+        "explain factoring",
+        "explain open factoring",
+        "what is factoring",
+        "what is open factoring"
+      ],
+      "answer": "📄 *OpenFactoring (Invoice Cash Flow Financing):*\n\nNever wait 30–90 days for client payments again. OpenFactoring unlocks your working capital instantly:\n\n• ⚡ *Up to 80% Advance:* Receive an immediate advance of up to 80% of verified, unpaid corporate or government client invoices within 24–48 hours.\n• 💼 *Smoothen Cash Flow:* Fund payroll, pay vendors, and accept new client orders without cash flow bottlenecks.\n• 🤝 *Balance Payment:* The remaining invoice balance (less a small processing fee) is remitted to you once your client settles.\n\nWould you like to speak to a specialist or apply for OpenFactoring?"
+    },
+    {
+      "id": "account_onboarding_guide",
       "patterns": [
         "create account",
         "open account",
-        "create wallet",
-        "wallet creation",
         "how to sign up",
         "register",
         "onboarding",
         "kyc",
-        "requirements"
+        "requirements",
+        "bvn",
+        "nin",
+        "how to register"
       ],
-      "answer": "Creating an account and digital wallet with ${COMPANY_NAME} is quick and secure:\n\n1. Sign up on our mobile app or web portal (${COMPANY_WEBSITE}).\n2. Provide your basic details (Full Name, Phone Number, Email).\n3. Complete KYC verification (BVN, NIN, and government-issued ID).\n4. Your instant virtual account & digital wallet will be ready to fund and use immediately!"
+      "answer": "🚀 *How to Create an OpenSpace Account (Takes 2–5 Mins):*\n\n1. Download the *Open Space Finance* app or visit https://app.openspace.finance\n2. Click *'Sign Up'* and enter your full name, email, and phone number.\n3. Verify your email confirmation link.\n4. Complete KYC verification (BVN, NIN, and valid government ID).\n5. Accept the consent terms — your instant virtual account and digital wallet are ready to fund and use immediately!"
     },
     {
-      "id": "business_banking",
-      "patterns": [
-        "business banking",
-        "corporate account",
-        "business account",
-        "merchant",
-        "invoicing",
-        "payroll",
-        "sme banking"
-      ],
-      "answer": "${COMPANY_NAME} Business Banking empowers businesses and SMEs with:\n\u2022 Dedicated corporate bank accounts\n\u2022 Multi-user access and role permissions\n\u2022 Automated payroll & invoicing tools\n\u2022 Fast merchant payment collections & APIs\n\nTo apply or speak with our business team, tell me your business name and email!"
-    },
-    {
-      "id": "personal_loans",
-      "patterns": [
-        "personal loan",
-        "individual loan",
-        "borrow money",
-        "salary advance",
-        "quick loan"
-      ],
-      "answer": "${COMPANY_NAME} Personal Loans provide fast access to credit with flexible repayment terms:\n\u2022 Competitive interest rates\n\u2022 No hidden charges\n\u2022 Fast approval directly to your OpenSpace wallet\n\nTo check your loan eligibility, share your desired loan amount and email, and our team will get in touch!"
-    },
-    {
-      "id": "business_loans",
-      "patterns": [
-        "business loan",
-        "sme loan",
-        "working capital",
-        "equipment financing",
-        "inventory loan",
-        "commercial loan"
-      ],
-      "answer": "${COMPANY_NAME} Business Loans help growing businesses scale:\n\u2022 Working capital & inventory financing\n\u2022 Flexible collateral and repayment options\n\u2022 Quick credit evaluation\n\nWould you like to speak to a loan specialist? Tell me your company name and loan requirements."
-    },
-    {
-      "id": "open_nearby",
-      "patterns": [
-        "open nearby",
-        "agent banking",
-        "nearby agent",
-        "pos terminal",
-        "cash in",
-        "cash out",
-        "become an agent"
-      ],
-      "answer": "\ud83d\udccd Open Nearby brings financial services to your doorstep:\n\u2022 Cash deposit (cash-in) & withdrawal (cash-out) at nearby verified agents\n\u2022 POS terminals for retail merchants and agents\n\u2022 Bill payments and fund transfers\n\nInterested in becoming an Open Nearby agent? Let us know and we'll connect you with our agency team!"
-    },
-    {
-      "id": "open_invest",
-      "patterns": [
-        "open invest",
-        "invest",
-        "investment",
-        "savings",
-        "earn interest",
-        "wealth",
-        "yield",
-        "fixed deposit"
-      ],
-      "answer": "\ud83d\udcc8 Open Invest helps you grow your wealth:\n\u2022 High-yield automated savings plans\n\u2022 Fixed and flexible investment portfolios\n\u2022 Regulated, secure assets with attractive returns\n\u2022 Real-time portfolio tracking in your OpenSpace dashboard"
-    },
-    {
-      "id": "transfer_transaction_help",
+      "id": "transfer_troubleshooting",
       "patterns": [
         "transfer help",
         "transaction status",
         "delayed transfer",
         "transfer not received",
         "where is my money",
-        "check transaction",
+        "failed transfer",
+        "trace transfer",
         "receipt"
       ],
-      "answer": "Need help with a transfer?\n\u2022 Most transfers are instant. If a transfer is delayed, interbank settlement can take up to 24 hours.\n\u2022 You can check transaction history and download receipts directly in the ${COMPANY_NAME} app.\n\u2022 If you need us to trace a specific transaction, provide the Transaction Reference ID and Amount."
+      "answer": "⚡ *Transfer & Transaction Help:*\n• *Internal Transfers:* Instant between OpenSpace users.\n• *Interbank Transfers:* Usually instant, but external bank settlement networks can take up to 24 hours.\n• *Troubleshooting:* Refresh your balance, check network connectivity, or pull your transaction receipt from the app.\n• If you need an agent to trace a transaction, please provide your *Transaction Reference ID* and *Amount*."
     },
     {
       "id": "payment_disputes",
@@ -146,7 +231,23 @@
         "chargeback",
         "complaint"
       ],
-      "answer": "To report a payment dispute or failed transaction:\n\u2022 Please provide: Transaction Reference, Date, Amount, and a brief description.\n\u2022 You can also email ${COMPANY_EMAIL} or say \u201cdispute\u201d here to log a support ticket immediately."
+      "answer": "⚠️ *Report a Dispute or Failed Transaction:*\nI can log a formal support ticket for you right now. Please tell me:\n1. Transaction Reference ID / Session ID\n2. Amount debited\n3. Description of what occurred\n\nOr simply reply *'dispute'* to begin the guided step-by-step resolution flow."
+    },
+    {
+      "id": "security_and_lost_phone",
+      "patterns": [
+        "lost phone",
+        "stolen phone",
+        "security",
+        "hacked",
+        "freeze account",
+        "block account",
+        "is it safe",
+        "safety",
+        "2fa",
+        "password"
+      ],
+      "answer": "🔒 *Security & Lost Phone Protocol:*\n• OpenSpace uses AES-256 bank-grade encryption, 2FA, and 24/7 automated fraud monitoring.\n• *Lost / Stolen Phone:* Immediately log in from another device to reset your password, or contact our support team at ${COMPANY_EMAIL} / ${COMPANY_PHONE} to temporarily freeze your account."
     },
     {
       "id": "human",
@@ -157,7 +258,8 @@
         "speak to someone",
         "talk to a person",
         "customer service rep",
-        "operator"
+        "operator",
+        "manager"
       ],
       "answer": "I can connect you with an OpenSpace customer support representative. Tell me what you need assistance with and I'll loop in our team."
     },

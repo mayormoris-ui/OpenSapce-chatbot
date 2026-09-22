@@ -81,9 +81,11 @@ function nextDisputeQuestion(missing) {
 
 async function extractDisputeFields({ model, userText }) {
 	const extractorSystem = `
-Extract transaction dispute / support issue details from the user message.
+You are evaluating a user's message during a transaction dispute or support ticket logging flow.
 Return JSON only:
 {
+  "isQuestion": boolean,
+  "questionReply": string|null,
   "issueType": string|null,
   "transactionRef": string|null,
   "amount": string|null,
@@ -94,10 +96,10 @@ Return JSON only:
   "cancel": boolean
 }
 Rules:
-- If user wants to cancel or stop logging the dispute, set cancel=true.
-- If user says they don't have reference ID (or "none", "no"), set transactionRef to "N/A".
-- If user says "skip", "no receipt", "don't have", "I don't have" in response to a receipt request, set receiptSkipped=true.
-- If no value present, use null / false.
+- If user wants to cancel or stop logging the dispute (e.g. "cancel", "stop", "nevermind", "exit"), set cancel=true.
+- If user is asking a general question or needs explanation, set isQuestion=true and answer concisely in questionReply.
+- If user says they don't have reference ID (or "none", "no", "idk"), set transactionRef to "N/A".
+- If no value present, use null.
 `;
 
 	const extraction = await openai.chat.completions.create({
@@ -131,7 +133,7 @@ function nextInquiryQuestion(missing) {
 	const field = missing[0];
 	switch (field) {
 		case "serviceType":
-			return "Which OpenSpace service are you interested in? (Personal Loan, Business Loan, Business Banking, Open Nearby, or Open Invest)";
+			return "Which OpenSpace service are you interested in? (Personal Loan, Business Loan, Business Banking, Open Market, Open Invest, or Murabaha Financing)";
 		case "details":
 			return "Could you share the amount or specific requirements you have in mind?";
 		case "name":
@@ -143,12 +145,15 @@ function nextInquiryQuestion(missing) {
 	}
 }
 
-async function extractInquiryFields({ model, userText }) {
+async function extractInquiryFields({ model, userText, serviceType }) {
 	const extractorSystem = `
-Extract product inquiry or loan application lead details from the user's message.
-Services include: Personal Loan, Business Loan, Business Banking, Open Nearby (Agent Banking), Open Invest (Savings/Investments), Wallet/Account Creation.
+You are analyzing a user's message during a product inquiry / loan application lead intake.
+Current service draft: "${serviceType || "General Product"}".
+
 Return JSON only:
 {
+  "isQuestionOrExplanation": boolean,
+  "questionReply": string|null,
   "serviceType": string|null,
   "details": string|null,
   "name": string|null,
@@ -156,7 +161,12 @@ Return JSON only:
   "cancel": boolean
 }
 Rules:
-- If user wants to cancel/stop, set cancel=true.
+- If user wants to cancel or stop (e.g. "cancel", "stop", "exit", "nevermind", "no"), set cancel=true.
+- If user is asking a question, asking to explain a feature (e.g. "Explain open market", "what is open market?", "how does it work?", "what is the rate?", "tell me more"), or requesting info:
+  * Set isQuestionOrExplanation=true.
+  * Provide a helpful, clear explanation in "questionReply".
+- If user is providing application details:
+  * Extract "serviceType", "details" (amount, tenure, requirements), "name", "email".
 - If no value present, use null.
 `;
 
@@ -275,10 +285,10 @@ export async function runAgent({ from, userText, session, contactName, mediaInfo
 			return { reply, newSession: session };
 		}
 
-		// If user skipped the receipt step, mark it as provided (no image)
-		if (parsed.receiptSkipped && !session.draft.receiptProvided) {
-			session.draft.receiptProvided = true;
-			session.draft.receiptUrl = "Not provided";
+		if (parsed.isQuestion && parsed.questionReply) {
+			const reply = `${parsed.questionReply}\n\nTo continue logging your dispute, please share your details or reply 'cancel' to exit.`;
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
 		}
 
 		session.draft = mergeDraft(session.draft, parsed, [
@@ -345,12 +355,34 @@ export async function runAgent({ from, userText, session, contactName, mediaInfo
 
 	// --- 2. Ongoing INQUIRY Flow Mode ---
 	if (session.flow === "INQUIRY") {
-		const parsed = await extractInquiryFields({ model, userText });
+		const parsed = await extractInquiryFields({
+			model,
+			userText,
+			serviceType: session.draft.serviceType
+		});
 
 		if (parsed.cancel) {
 			session.flow = null;
 			session.draft = {};
 			const reply = "No problem — I have cancelled this application request. What else can I help you with?";
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
+		}
+
+		// If user is asking an informational question or asking to explain a feature, don't trap them!
+		if (parsed.isQuestionOrExplanation) {
+			// Check if FAQ gives an exact answer
+			const faqAnswer = await lookupFaq({ question: userText });
+			const explanation = faqAnswer || parsed.questionReply;
+
+			// Reset flow so user isn't locked in an infinite form loop
+			session.flow = null;
+			session.draft = {};
+
+			const reply = explanation
+				? `${explanation}\n\nWould you like to apply for this, or explore any other OpenSpace services?`
+				: "Could you please clarify your question or let me know if you would like to apply?";
+
 			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
 			return { reply, newSession: session };
 		}
@@ -390,26 +422,36 @@ export async function runAgent({ from, userText, session, contactName, mediaInfo
 	const withinHours = isWithinBusinessHours();
 
 	const systemPrompt = `
-You are the official WhatsApp AI assistant for "${info.name}", a modern fintech company.
-${info.name} products & services:
-1. Account & Digital Wallet Creation (Fast online KYC, instant virtual accounts)
-2. Business Banking (SME accounts, corporate payroll, invoicing, merchant tools)
-3. Personal Loans & Business Loans (Flexible financing, quick approvals)
-4. Open Nearby (Agent banking, POS terminals, cash-in/cash-out)
-5. Open Invest (High-yield savings & structured investment plans)
-6. Transaction tracking, transfer help, and payment dispute management
+You are the official WhatsApp AI assistant for "${info.name}", a modern AI-powered neo-fintech & lifestyle ecosystem.
 
-Contact & Operating details:
-- Email: ${info.email}
-- Phone: ${info.phone}
+${info.name} Core Products & Knowledge:
+1. OpenPay (Wallets & Transfers): Instant transfers, bill payments, digital multi-wallet management. First 3 digital wallets are 100% FREE; additional wallets are ₦100 each.
+2. OpenSpace COOP Pools (Flexible Investments): Structured cooperative investment pools earning 15%–21% ROI across 90-day (Basic), 180-day (Silver), 270-day (Gold), and 365-day (Platinum) plans (₦100,000–₦10,000,000).
+3. Goals (Locked Savings): Purpose-driven target locked savings earning up to 18.00% p.a. for milestones like Rent, School Fees, and Business.
+4. Wealth Tools: Automated Budgeting with smart category limits, Spend-to-Save (automatic Round-Up spare change savings on purchases), and real-time Financial Analytics.
+5. Ethical / Non-Interest Finance (0% Interest / Riba-Free, Open to Everyone):
+   - OpenSpace Murabaha: Transparent asset financing (we buy equipment/goods and you repay in flexible installments with a pre-agreed fixed markup).
+   - OpenSpace Mudaraba: Profit-sharing investment partnerships based on agreed ratios.
+   - Ijarah: Ethical leasing (Coming Soon).
+6. Open Credit & Loans: Personal and SME loans from ₦50,000 to ₦10,000,000 (tenures up to 12 months / 52 weeks).
+7. Open Market: Tailored micro-lending (₦20,000 to ₦1,000,000) for market traders, retail merchants, and petty traders with flexible daily/weekly repayments, free financial coaching, and mobile record-keeping software.
+8. OpenFactoring: Instant working capital advance of up to 80% on unpaid client invoices within 24–48 hours for contractors, vendors, and SMEs.
+9. OpenInsure: Protection and insurance plans for health, life, and business assets (Coming Soon).
+10. Account Onboarding: 2–5 min signup via 'Open Space Finance' mobile app (iOS & Android) or web portal (app.openspace.finance) with BVN/NIN KYC.
+
+Contact & Physical Offices:
+- Abuja Head Office: 2nd Floor Novare Central Mall, Plot 502 Dalaba Street, Wuse Zone 5, Abuja.
+- Lagos Office: 11 Olufemi Pedro Street, Plot 9, Parkview Estate, Ikoyi, Lagos.
+- Canadian Office (Toronto): 1920 Yonge Street, 2nd Floor, Toronto, M4S 3E2.
+- Email: ${info.email} | Phone: ${info.phone} | WhatsApp: +234 911 666 0065
 - Support Hours: Mon–Fri 9:00 AM - 5:00 PM WAT
 - Current Support Availability: ${withinHours ? "ONLINE (Within Business Hours)" : "OFFLINE (Outside Business Hours)"}
 
 ${useName
-	? `The user's first name is "${displayName}". You MUST address them by this name somewhere in your reply — naturally woven in (e.g. at the start of a greeting or at the end of a confirmation), not bolted on awkwardly.`
-	: displayName
-		? `The user's first name is "${displayName}". Do NOT use their name in this reply — keep it name-free to avoid repetition. Only address them by name on the first message, at closing confirmations, and every few messages.`
-		: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
+			? `The user's first name is "${displayName}". You MUST address them by this name somewhere in your reply — naturally woven in (e.g. at the start of a greeting or at the end of a confirmation), not bolted on awkwardly.`
+			: displayName
+				? `The user's first name is "${displayName}". Do NOT use their name in this reply — keep it name-free to avoid repetition. Only address them by name on the first message, at closing confirmations, and every few messages.`
+				: `The user's name is not known yet — do not guess or invent one. If it becomes useful (e.g. logging a ticket), ask for it naturally.`}
 
 Identify user intent and return JSON only:
 {
@@ -422,12 +464,21 @@ Identify user intent and return JSON only:
   "handoffSummary": string|null,
   "reply": string
 }
+
 Guidelines:
-- If user wants to report a failed payment, dispute, chargeback, or money deducted without credit, set startDispute=true and intent="DISPUTE".
-- If user wants to apply for a loan, start business banking, join Open Nearby agent network, or invest, set startInquiry=true and intent="INQUIRY".
-- If user asks a product question, onboarding steps, contact, or hours, set intent="FAQ" with a concise faqQuery.
-- If user explicitly requests a human / agent / manager, set startHandoff=true.
-- Keep replies professional, clear, and reassuring.
+1. PRODUCT EXPLORATION / EXPLANATION (CRITICAL):
+   - When the user asks about, names, or wants to explore/explain a specific feature or service (e.g., "open market", "explain open market", "what is open market?", "tell me about coop pools", "coop pools", "7", "murabaha", "loans", "spend to save", "openfactoring", "wallets"):
+     * Set intent="FAQ" with "faqQuery" set to the product name/query (e.g. "open market").
+     * startInquiry MUST be FALSE.
+     * In "reply", provide a thorough, engaging, beautifully formatted explanation of the product's features, benefits, and how to get started.
+2. LOAN / PRODUCT APPLICATION (LEAD GENERATION):
+   - ONLY set startInquiry=true and intent="INQUIRY" if the user EXPLICITLY expresses intent to APPLY, SIGN UP, REGISTER, or SUBMIT an application (e.g. "I want to apply for Open Market", "Apply for ₦500,000 loan", "Sign me up for business banking", "Start application").
+3. DISPUTES:
+   - If user reports a failed payment, dispute, chargeback, or money deducted without credit, set startDispute=true and intent="DISPUTE".
+4. HUMAN ESCALATION:
+   - If user explicitly requests a human / live agent / representative, set startHandoff=true and intent="HANDOFF".
+5. TRANSACTION STATUS:
+   - If user provides a transaction reference asking for status, set intent="TX_STATUS" and txRef.
 `;
 
 	const decision = await openai.chat.completions.create({
@@ -458,7 +509,7 @@ Guidelines:
 		};
 	}
 
-	// A. Check FAQ First
+	// A. Check FAQ First (Handles exact matches from knowledge base)
 	if (plan.intent === "FAQ" || plan.faqQuery) {
 		const answer = await lookupFaq({ question: plan.faqQuery || userText });
 		if (answer) {
@@ -562,12 +613,17 @@ Guidelines:
 		return { reply, newSession: session };
 	}
 
-	// D. Start Product / Loan Inquiry Flow
+	// D. Start Product / Loan Inquiry Flow (Only for explicit application requests)
 	if (plan.startInquiry || plan.intent === "INQUIRY") {
 		session.flow = "INQUIRY";
 		session.draft = {};
 
-		const initialParsed = await extractInquiryFields({ model, userText });
+		const initialParsed = await extractInquiryFields({
+			model,
+			userText,
+			serviceType: session.draft.serviceType
+		});
+
 		if (initialParsed.cancel) {
 			session.flow = null;
 			session.draft = {};
@@ -637,7 +693,7 @@ Guidelines:
 	const reply =
 		typeof plan.reply === "string" && plan.reply.trim()
 			? plan.reply.trim()
-			: `${defaultGreeting} I can help you with:\n1. 💳 Account & Wallet Creation\n2. 🏢 Business Banking\n3. 💰 Personal & Business Loans\n4. 📍 Open Nearby & Open Invest\n5. ⚠️ Transaction Help & Disputes\n\nHow can I help you today?`;
+			: `${defaultGreeting} I can help you with:\n1. 💳 Account & Wallet Creation\n2. 🏢 Business Banking\n3. 💰 Personal & Business Loans\n4. 📍 Open Market & OpenFactoring\n5. 📈 Open Invest & COOP Pools\n6. ⚠️ Transaction Help & Disputes\n\nHow can I help you today?`;
 
 	session.history = [
 		...history,

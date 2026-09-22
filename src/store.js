@@ -10,6 +10,7 @@ const sessionState = new Map();
  *                                // Twilio ProfileName), remembered for the
  *                                // life of the session so replies can greet
  *                                // the user by name.
+ *   messageCount: number,        // Total messages exchanged, used for name cadence.
  *   draft: {
  *     // For DISPUTE flow:
  *     issueType?: string,
@@ -18,6 +19,9 @@ const sessionState = new Map();
  *     description?: string,
  *     name?: string,
  *     email?: string,
+ *     receiptUrl?: string,       // WhatsApp media key / path of uploaded receipt screenshot.
+ *     receiptProvided?: boolean, // true once user has sent (or declined) a receipt image.
+ *     escalated?: boolean,       // true once the case has been forwarded to a human agent.
  *
  *     // For INQUIRY flow (Loans, Business Banking, Open Nearby, Open Invest):
  *     serviceType?: string,

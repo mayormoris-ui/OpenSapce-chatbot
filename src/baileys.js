@@ -106,7 +106,21 @@ async function startBaileysBot() {
 				msg.message?.imageMessage?.caption ||
 				"";
 
-			const trimmedText = text.trim();
+			// Detect receipt / screenshot images sent by the user
+			const imageMsg = msg.message?.imageMessage;
+			const mediaInfo = imageMsg
+				? {
+						mediaKey: imageMsg.mediaKey || null,
+						mimetype: imageMsg.mimetype || "image/jpeg",
+						caption: imageMsg.caption || "",
+						// A human-readable label passed into the agent so it can
+						// acknowledge receipt and store a reference.
+						label: "[Image/Receipt received]"
+				  }
+				: null;
+
+			// If the user sent only an image (no caption), treat it as a receipt submission
+			const trimmedText = (text.trim() || (mediaInfo ? "[receipt image sent]" : ""));
 			if (!trimmedText) continue;
 
 			const senderNumber = remoteJid.split("@")[0];
@@ -121,6 +135,16 @@ async function startBaileysBot() {
 				await sock.sendPresenceUpdate("composing", remoteJid);
 
 				const session = getSession(remoteJid);
+
+				// If a DISPUTE is in progress and the user sent an image,
+				// store a receipt reference immediately on the draft so the
+				// agent can advance the flow without needing to re-ask.
+				if (mediaInfo && session.flow === "DISPUTE") {
+					session.draft = session.draft || {};
+					session.draft.receiptUrl = `whatsapp-media:${mediaInfo.mediaKey || "received"}`;
+					session.draft.receiptProvided = true;
+				}
+
 				console.log(`🤖 Generating OpenSpace AI Response...`);
 
 				const t0 = Date.now();
@@ -128,7 +152,8 @@ async function startBaileysBot() {
 					from: remoteJid,
 					userText: trimmedText,
 					session,
-					contactName: rawPushName
+					contactName: rawPushName,
+					mediaInfo
 				});
 				console.log(`⏱ Agent took ${Date.now() - t0}ms`);
 

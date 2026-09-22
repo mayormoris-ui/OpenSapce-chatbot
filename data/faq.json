@@ -261,7 +261,66 @@
         "operator",
         "manager"
       ],
-      "answer": "I will connect you with an OpenSpace customer care specialist. Please tell me briefly what you need help with, and our team will take over the chat."
+      "answer": "I can connect you with an OpenSpace customer support representative. Tell me what you need assistance with and I'll loop in our team."
+    },
+    {
+      "id": "failed_transaction_escalation",
+      "patterns": [
+        "money not received",
+        "transaction failed",
+        "payment failed",
+        "transfer failed",
+        "deducted but not sent",
+        "deducted without credit",
+        "not credited",
+        "money missing",
+        "money deducted",
+        "wrong debit",
+        "incorrect debit"
+      ],
+      "answer": "\u26a0\ufe0f Sorry to hear about this! To help resolve your failed or missing transaction, we'll need to collect a few details:\n\n1. \ud83d\udcf5 *Transaction ID / Reference Number* \u2014 found in your transaction history or SMS alert.\n2. \ud83d\udcb0 *Amount* involved.\n3. \ud83d\udcf8 *A screenshot or photo of your receipt* (if available).\n\nSimply reply *\"dispute\"* and I'll walk you through the process step by step. All your details will be forwarded directly to our customer service team for swift resolution."
+    },
+    {
+      "id": "unresolved_issue",
+      "patterns": [
+        "not resolved",
+        "still having issues",
+        "problem not fixed",
+        "issue not resolved",
+        "can't help me",
+        "cannot help",
+        "need more help",
+        "speak to manager",
+        "escalate",
+        "this isn't helping",
+        "not helpful"
+      ],
+      "answer": "I understand your concern and I'm sorry this hasn't been fully resolved yet. \ud83d\ude4f\n\nLet me connect you directly with a member of our customer service team who can give your case the personal attention it deserves.\n\nJust reply *\"agent\"* or *\"yes\"* and I'll escalate this right away, along with all the details from our conversation."
+    },
+    {
+      "id": "receipt_screenshot",
+      "patterns": [
+        "how to send receipt",
+        "send screenshot",
+        "upload receipt",
+        "attach receipt",
+        "send photo of receipt",
+        "send transaction proof"
+      ],
+      "answer": "To send your receipt or transaction screenshot:\n\n\ud83d\uddf3\ufe0f Simply *attach the image* directly to this WhatsApp chat \u2014 just like sending a regular photo.\n\nOnce received, our team will use it to verify and resolve your issue faster. If you're unable to find or send the receipt, don't worry \u2014 just type *skip* and we'll proceed with the information we have."
+    },
+    {
+      "id": "customer_service_contact",
+      "patterns": [
+        "customer service",
+        "customer support",
+        "speak to customer service",
+        "talk to support",
+        "contact support",
+        "reach support team",
+        "support team"
+      ],
+      "answer": "You can reach our customer service team through any of the following:\n\n\ud83d\udce7 *Email:* ${COMPANY_EMAIL}\n\ud83d\udcde *Phone:* ${COMPANY_PHONE}\n\ud83d\udd52 *Hours:* Mon\u2013Fri, 9:00 AM \u2013 5:00 PM WAT\n\nAlternatively, type *\"agent\"* here and I'll flag your message to a support representative right away!"
     }
   ]
 }

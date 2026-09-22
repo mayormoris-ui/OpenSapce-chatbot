@@ -10,8 +10,8 @@ function resolveFaqPath() {
 	return path.join(__dirname, "..", "data", "faq.json");
 }
 
-export function loadFaq() {
-	if (cachedFaq) return cachedFaq;
+export function loadFaq({ forceReload = false } = {}) {
+	if (cachedFaq && !forceReload) return cachedFaq;
 
 	const faqPath = resolveFaqPath();
 	const raw = fs.readFileSync(faqPath, "utf-8");
@@ -34,3 +34,9 @@ export function loadFaq() {
 
 	return cachedFaq;
 }
+
+/** Force a full reload of the FAQ knowledge base from disk. */
+export function reloadFaq() {
+	return loadFaq({ forceReload: true });
+}
+

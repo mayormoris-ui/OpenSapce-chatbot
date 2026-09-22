@@ -9,6 +9,7 @@ import pino from "pino";
 
 import { runAgent } from "./agent.js";
 import { getSession, setSession } from "./store.js";
+import { forwardTicketToAgent, forwardHandoffToAgent } from "./notify.js";
 
 const logger = pino({ level: "silent" });
 
@@ -148,7 +149,7 @@ async function startBaileysBot() {
 				console.log(`🤖 Generating OpenSpace AI Response...`);
 
 				const t0 = Date.now();
-				const { reply, newSession } = await runAgent({
+				const { reply, newSession, ticketData, handoffData } = await runAgent({
 					from: remoteJid,
 					userText: trimmedText,
 					session,
@@ -162,6 +163,14 @@ async function startBaileysBot() {
 				// Send the AI reply back to WhatsApp
 				await sock.sendMessage(remoteJid, { text: reply });
 				console.log(`📤 [Reply Sent to +${senderNumber}]:\n${reply}\n`);
+
+				// Forward ticket or handoff to real customer care agent if triggered
+				if (ticketData) {
+					await forwardTicketToAgent(sock, ticketData, remoteJid);
+				}
+				if (handoffData) {
+					await forwardHandoffToAgent(sock, handoffData, remoteJid);
+				}
 
 				// Reset presence
 				await sock.sendPresenceUpdate("paused", remoteJid);

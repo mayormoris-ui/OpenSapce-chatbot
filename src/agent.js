@@ -350,7 +350,7 @@ export async function runAgent({ from, userText, session, contactName, mediaInfo
 			`\n\nFor urgent matters, you can also reach us at ${info.email} or ${info.phone}.`;
 
 		session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
-		return { reply: msg, newSession: session };
+		return { reply: msg, newSession: session, ticketData: result };
 	}
 
 	// --- 2. Ongoing INQUIRY Flow Mode ---
@@ -607,7 +607,7 @@ Guidelines:
 				`Our dispute team will review this and notify you at ${result.email || "this WhatsApp number"}.`;
 
 			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
-			return { reply: msg, newSession: session };
+			return { reply: msg, newSession: session, ticketData: result };
 		}
 
 		return { reply, newSession: session };
@@ -676,7 +676,7 @@ Guidelines:
 		const result = await handoffToHumanStub({ from, summary });
 
 		const reply = result.available
-			? `👨‍💼 *Connecting to Support*\n\n${displayName ? `Thanks ${displayName}, ` : ""}I’m alerting our support team right now.\n• *Reference:* ${result.handoffId}\n• *Phone:* ${result.phone}\n• *Email:* ${result.email}\n\nPlease leave any additional details here and an agent will respond directly.`
+			? `👨‍💼 *Connecting to Support*\n\n${displayName ? `Thanks ${displayName}, ` : ""}I'm alerting our support team right now.\n• *Reference:* ${result.handoffId}\n• *Phone:* ${result.phone}\n• *Email:* ${result.email}\n\nPlease leave any additional details here and an agent will respond directly.`
 			: `🕒 *Support Outside Operating Hours*\n\n${displayName ? `Thanks ${displayName}, our` : "Our"} team is currently offline (Operating hours: Mon–Fri 9:00 AM - 5:00 PM WAT).\n• *Reference:* ${result.handoffId}\n• *Email:* ${result.email}\n\nPlease leave your message and email address here, and we will get back to you first thing when we open!`;
 
 		session.history = [
@@ -685,7 +685,7 @@ Guidelines:
 			{ role: "assistant", content: reply }
 		];
 
-		return { reply, newSession: session };
+		return { reply, newSession: session, handoffData: result };
 	}
 
 	// F. Default Assistant Response

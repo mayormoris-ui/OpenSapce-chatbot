@@ -4,7 +4,8 @@ import {
 	createSupportTicketStub,
 	createProductInquiryStub,
 	checkTransactionStatusStub,
-	handoffToHumanStub
+	handoffToHumanStub,
+	notifyCustomerServiceAgent
 } from "./tools.js";
 import { isWithinBusinessHours } from "./bizHours.js";
 
@@ -51,6 +52,9 @@ function missingDisputeFields(draft) {
 	if (!draft.description && !draft.issueType) missing.push("description");
 	if (!draft.amount) missing.push("amount");
 	if (!draft.transactionRef) missing.push("transactionRef");
+	// Ask for a receipt/screenshot only after we have the transaction ref.
+	// Skip this step if the user has already sent one or explicitly declined.
+	if (draft.transactionRef && !draft.receiptProvided) missing.push("receipt");
 	if (!draft.name) missing.push("name");
 	return missing;
 }
@@ -64,6 +68,8 @@ function nextDisputeQuestion(missing) {
 			return "What was the transaction amount involved (e.g., 50,000 NGN)?";
 		case "transactionRef":
 			return "Do you have the Transaction Reference or Session ID? (If you don't have it, just type 'none')";
+		case "receipt":
+			return "Please send a screenshot or photo of your transaction receipt to help us investigate. If you don't have one, just type *skip*.";
 		case "name":
 			return "Please provide your full name so we can locate your OpenSpace profile.";
 		case "email":
@@ -84,12 +90,14 @@ Return JSON only:
   "description": string|null,
   "name": string|null,
   "email": string|null,
+  "receiptSkipped": boolean,
   "cancel": boolean
 }
 Rules:
 - If user wants to cancel or stop logging the dispute, set cancel=true.
 - If user says they don't have reference ID (or "none", "no"), set transactionRef to "N/A".
-- If no value present, use null.
+- If user says "skip", "no receipt", "don't have", "I don't have" in response to a receipt request, set receiptSkipped=true.
+- If no value present, use null / false.
 `;
 
 	const extraction = await openai.chat.completions.create({
@@ -188,7 +196,7 @@ function shouldUseName(session) {
 	return count === 0 || count % NAME_INTERVAL === 0;
 }
 
-export async function runAgent({ from, userText, session, contactName }) {
+export async function runAgent({ from, userText, session, contactName, mediaInfo = null }) {
 	mustHaveEnv();
 	const model = process.env.GROQ_MODEL || process.env.OPENAI_MODEL || "openai/gpt-oss-120b";
 	const info = companyContext();
@@ -212,6 +220,49 @@ export async function runAgent({ from, userText, session, contactName }) {
 
 	const history = (session.history || []).slice(-10);
 
+	// --- 0. Pending Escalation Confirmation ---
+	// Checked FIRST before flow checks or LLM calls so user confirmations ("yes"/"no")
+	// to an escalation offer are handled immediately.
+	if (session.pendingEscalation) {
+		const text = userText.trim().toLowerCase();
+		const affirmative = /^(yes|yeah|yep|sure|ok|okay|please|yh|yea|connect|escalate|i want|do that)/i.test(text);
+		const negative = /^(no|nope|cancel|stop|dont|don't|nevermind)/i.test(text);
+
+		if (affirmative) {
+			const reason = session.pendingEscalation.reason || userText;
+			delete session.pendingEscalation;
+
+			const handoff = await handoffToHumanStub({ from, summary: reason });
+			await notifyCustomerServiceAgent({
+				from,
+				escalationId: handoff.handoffId,
+				issueType: "Unresolved Issue / General Question",
+				description: reason,
+				name: displayName || undefined,
+				email: undefined
+			});
+
+			const reply = handoff.available
+				? `✅ *Connected to Customer Service*\n\n` +
+				  (displayName ? `Thanks ${displayName}! ` : "") +
+				  `Your issue has been escalated to our customer service team.\n• *Reference ID:* ${handoff.handoffId}\n• *Details:* ${reason}\n\nAn agent will review your request and respond to you here shortly. You can also email us at ${info.email}.`
+				: `🕒 *Support Outside Operating Hours*\n\n` +
+				  (displayName ? `Thanks ${displayName}. ` : "") +
+				  `Our customer service team is currently offline (Mon–Fri 9:00 AM – 5:00 PM WAT).\n• *Reference ID:* ${handoff.handoffId}\n• *Details:* ${reason}\n\nYour issue has been logged and forwarded to our agents. We will reach out to you first thing when we open!`;
+
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
+		} else if (negative) {
+			delete session.pendingEscalation;
+			const reply = "Understood! How else can I assist you today?";
+			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
+			return { reply, newSession: session };
+		} else {
+			// User provided new details/question — clear pending flag and continue to flow/intent logic.
+			delete session.pendingEscalation;
+		}
+	}
+
 	// --- 1. Ongoing DISPUTE Flow Mode ---
 	if (session.flow === "DISPUTE") {
 		const parsed = await extractDisputeFields({ model, userText });
@@ -222,6 +273,12 @@ export async function runAgent({ from, userText, session, contactName }) {
 			const reply = "Understood. I have cancelled the dispute report. How else can I assist you today?";
 			session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: reply }];
 			return { reply, newSession: session };
+		}
+
+		// If user skipped the receipt step, mark it as provided (no image)
+		if (parsed.receiptSkipped && !session.draft.receiptProvided) {
+			session.draft.receiptProvided = true;
+			session.draft.receiptUrl = "Not provided";
 		}
 
 		session.draft = mergeDraft(session.draft, parsed, [
@@ -240,20 +297,47 @@ export async function runAgent({ from, userText, session, contactName }) {
 			return { reply, newSession: session };
 		}
 
+		// All fields collected — log the ticket, notify CS agent, then confirm.
 		const result = await createSupportTicketStub({ from, draft: session.draft });
+
+		// Capture receipt status before clearing the draft.
+		const receiptWasProvided = !!(session.draft.receiptUrl && session.draft.receiptUrl !== "Not provided");
+
+		// Fire the customer service agent notification with ALL collected data.
+		const csNotification = await notifyCustomerServiceAgent({
+			from,
+			escalationId: `ESC-${result.ticketId}`,
+			issueType: result.issueType,
+			description: result.description,
+			name: result.name,
+			email: result.email,
+			transactionId: result.transactionRef,
+			receiptUrl: session.draft.receiptUrl || "Not provided",
+			amount: result.amount,
+			extra: { ticketId: result.ticketId, ticketStatus: result.status }
+		});
+
 		session.flow = null;
 		session.draft = {};
 
+		const receiptNote = receiptWasProvided
+			? "\n• *Receipt:* ✅ Received"
+			: "\n• *Receipt:* ⚠️ Not provided";
+
 		const msg =
 			(displayName ? `Thanks, ${displayName}! ` : "") +
-			`📋 *Support Ticket Logged Successfully*\n\n` +
+			`📋 *Support Ticket Logged & Sent to Customer Service*\n\n` +
 			`• *Ticket ID:* ${result.ticketId}\n` +
 			`• *Customer:* ${result.name}\n` +
 			`• *Issue:* ${result.description}\n` +
 			`• *Amount:* ${result.amount}\n` +
-			`• *Reference:* ${result.transactionRef}\n` +
-			`• *Status:* ${result.status}\n\n` +
-			`Our support team is reviewing your case and will follow up shortly. You can also reach us directly at ${info.email}.`;
+			`• *Transaction Ref:* ${result.transactionRef}` +
+			receiptNote +
+			`\n\n` +
+			(csNotification.available
+				? `✅ Our customer service team has been notified and an agent will follow up with you shortly.`
+				: `🕒 Our support team is currently offline (Mon–Fri 9:00 AM – 5:00 PM WAT). Your case has been logged and sent to our customer service team — an agent will contact you when we open.`) +
+			`\n\nFor urgent matters, you can also reach us at ${info.email} or ${info.phone}.`;
 
 		session.history = [...history, { role: "user", content: userText }, { role: "assistant", content: msg }];
 		return { reply: msg, newSession: session };
@@ -385,6 +469,21 @@ Guidelines:
 			];
 			return { reply: answer, newSession: session };
 		}
+		// FAQ intent matched but no answer found → offer to escalate to a human agent.
+		const escalationOffer =
+			(displayName ? `${displayName}, ` : "") +
+			`I wasn't able to find a specific answer for your question in our knowledge base. ` +
+			`I can connect you with our customer service team who can assist you directly.\n\n` +
+			`Would you like me to escalate this to a customer service agent? ` +
+			`Reply *yes* to connect, or describe your issue in more detail and I'll try again.`;
+		// Mark the session so that a "yes" reply immediately triggers escalation.
+		session.pendingEscalation = { reason: plan.faqQuery || userText };
+		session.history = [
+			...history,
+			{ role: "user", content: userText },
+			{ role: "assistant", content: escalationOffer }
+		];
+		return { reply: escalationOffer, newSession: session };
 	}
 
 	// B. Transaction Status Check

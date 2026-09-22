@@ -93,3 +93,78 @@ export async function handoffToHumanStub({ from, summary }) {
 		phone: process.env.COMPANY_PHONE || "+234 201 3309 599"
 	};
 }
+
+/**
+ * Notify the customer service agent with a full escalation payload.
+ * In production, replace the console.log block with your email/Slack/CRM
+ * notification logic (e.g. send an email via Nodemailer, post to Slack
+ * webhook, or create a CRM ticket via API).
+ *
+ * @param {object} opts
+ * @param {string}  opts.from          - WhatsApp number of the customer
+ * @param {string}  opts.escalationId  - ESC-xxxxx reference
+ * @param {string}  opts.issueType     - e.g. "Failed Transaction", "General Issue"
+ * @param {string}  opts.description   - Detailed description of the problem
+ * @param {string}  [opts.name]        - Customer's full name
+ * @param {string}  [opts.email]       - Customer's email address
+ * @param {string}  [opts.transactionId] - Transaction ref / session ID
+ * @param {string}  [opts.receiptUrl]  - URL or status of receipt/screenshot
+ * @param {string}  [opts.amount]      - Transaction amount involved
+ * @param {object}  [opts.extra]       - Any additional key-value metadata
+ */
+export async function notifyCustomerServiceAgent({
+	from,
+	escalationId,
+	issueType,
+	description,
+	name,
+	email,
+	transactionId,
+	receiptUrl,
+	amount,
+	extra = {}
+}) {
+	const available = isWithinBusinessHours();
+	const timestamp = new Date().toISOString();
+
+	const payload = {
+		escalationId,
+		timestamp,
+		customerWhatsApp: from,
+		customerName: name || "Unknown",
+		customerEmail: email || "Not provided",
+		issueType: issueType || "Unclassified Issue",
+		description: description || "No description provided",
+		transactionId: transactionId || "N/A",
+		receiptUrl: receiptUrl || "Not provided",
+		amount: amount || "N/A",
+		agentAvailable: available,
+		...extra
+	};
+
+	// ── Production hook ─────────────────────────────────────────────────────
+	// Replace this block with your real notification logic, for example:
+	//
+	//   await sendEscalationEmail(payload);          // email via Nodemailer
+	//   await postToSlack(payload);                  // Slack webhook
+	//   await createCrmTicket(payload);              // CRM API call
+	//
+	// ────────────────────────────────────────────────────────────────────────
+	console.log(
+		`\n${"-".repeat(60)}\n` +
+		`[🚨 CUSTOMER SERVICE ESCALATION]\n` +
+		`Escalation ID : ${payload.escalationId}\n` +
+		`Timestamp     : ${payload.timestamp}\n` +
+		`Customer      : ${payload.customerName} (${payload.customerWhatsApp})\n` +
+		`Email         : ${payload.customerEmail}\n` +
+		`Issue Type    : ${payload.issueType}\n` +
+		`Description   : ${payload.description}\n` +
+		`Transaction ID: ${payload.transactionId}\n` +
+		`Amount        : ${payload.amount}\n` +
+		`Receipt       : ${payload.receiptUrl}\n` +
+		`Agent Online  : ${payload.agentAvailable ? "YES" : "NO (outside hours)"}\n` +
+		`${"-".repeat(60)}`
+	);
+
+	return { payload, available };
+}

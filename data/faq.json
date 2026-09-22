@@ -12,7 +12,7 @@
         "business hours",
         "work hours"
       ],
-      "answer": "Our customer support hours are:\nMon–Fri: ${BIZ_HOURS_MON_FRI} (WAT)\nWeekends: Closed\n(Timezone: ${COMPANY_TIMEZONE})\n\nYou can also reach us via email at ${COMPANY_EMAIL} anytime."
+      "answer": "Our customer support hours are:\nMon\u2013Fri: ${BIZ_HOURS_MON_FRI} (WAT)\nWeekends: Closed\n(Timezone: ${COMPANY_TIMEZONE})\n\nYou can also reach us via email at ${COMPANY_EMAIL} anytime."
     },
     {
       "id": "contact",
@@ -28,7 +28,7 @@
         "office address",
         "website"
       ],
-      "answer": "You can reach ${COMPANY_NAME} via:\n📧 Email: ${COMPANY_EMAIL}\n📞 Phone: ${COMPANY_PHONE}\n🌐 Website: ${COMPANY_WEBSITE}\n🕒 Support Hours: Mon–Fri 9am–5pm WAT"
+      "answer": "You can reach ${COMPANY_NAME} via:\n\ud83d\udce7 Email: ${COMPANY_EMAIL}\n\ud83d\udcde Phone: ${COMPANY_PHONE}\n\ud83c\udf10 Website: ${COMPANY_WEBSITE}\n\ud83d\udd52 Support Hours: Mon\u2013Fri 9am\u20135pm WAT"
     },
     {
       "id": "services_overview",
@@ -41,7 +41,7 @@
         "what can you do",
         "features"
       ],
-      "answer": "${COMPANY_NAME} offers comprehensive fintech solutions:\n1. 💳 Account & Digital Wallet Creation\n2. 🏢 Business Banking & Corporate Accounts\n3. 💰 Personal & Business Loans\n4. 📍 Open Nearby (Agent Banking / Cash-In & Cash-Out)\n5. 📈 Open Invest (High-yield Savings & Investments)\n\nLet me know which product you would like to explore!"
+      "answer": "${COMPANY_NAME} offers comprehensive fintech solutions:\n1. \ud83d\udcb3 Account & Digital Wallet Creation\n2. \ud83c\udfe2 Business Banking & Corporate Accounts\n3. \ud83d\udcb0 Personal & Business Loans\n4. \ud83d\udccd Open Nearby (Agent Banking / Cash-In & Cash-Out)\n5. \ud83d\udcc8 Open Invest (High-yield Savings & Investments)\n\nLet me know which product you would like to explore!"
     },
     {
       "id": "account_wallet_creation",
@@ -69,7 +69,7 @@
         "payroll",
         "sme banking"
       ],
-      "answer": "${COMPANY_NAME} Business Banking empowers businesses and SMEs with:\n• Dedicated corporate bank accounts\n• Multi-user access and role permissions\n• Automated payroll & invoicing tools\n• Fast merchant payment collections & APIs\n\nTo apply or speak with our business team, tell me your business name and email!"
+      "answer": "${COMPANY_NAME} Business Banking empowers businesses and SMEs with:\n\u2022 Dedicated corporate bank accounts\n\u2022 Multi-user access and role permissions\n\u2022 Automated payroll & invoicing tools\n\u2022 Fast merchant payment collections & APIs\n\nTo apply or speak with our business team, tell me your business name and email!"
     },
     {
       "id": "personal_loans",
@@ -80,7 +80,7 @@
         "salary advance",
         "quick loan"
       ],
-      "answer": "${COMPANY_NAME} Personal Loans provide fast access to credit with flexible repayment terms:\n• Competitive interest rates\n• No hidden charges\n• Fast approval directly to your OpenSpace wallet\n\nTo check your loan eligibility, share your desired loan amount and email, and our team will get in touch!"
+      "answer": "${COMPANY_NAME} Personal Loans provide fast access to credit with flexible repayment terms:\n\u2022 Competitive interest rates\n\u2022 No hidden charges\n\u2022 Fast approval directly to your OpenSpace wallet\n\nTo check your loan eligibility, share your desired loan amount and email, and our team will get in touch!"
     },
     {
       "id": "business_loans",
@@ -92,7 +92,7 @@
         "inventory loan",
         "commercial loan"
       ],
-      "answer": "${COMPANY_NAME} Business Loans help growing businesses scale:\n• Working capital & inventory financing\n• Flexible collateral and repayment options\n• Quick credit evaluation\n\nWould you like to speak to a loan specialist? Tell me your company name and loan requirements."
+      "answer": "${COMPANY_NAME} Business Loans help growing businesses scale:\n\u2022 Working capital & inventory financing\n\u2022 Flexible collateral and repayment options\n\u2022 Quick credit evaluation\n\nWould you like to speak to a loan specialist? Tell me your company name and loan requirements."
     },
     {
       "id": "open_nearby",
@@ -105,7 +105,7 @@
         "cash out",
         "become an agent"
       ],
-      "answer": "📍 Open Nearby brings financial services to your doorstep:\n• Cash deposit (cash-in) & withdrawal (cash-out) at nearby verified agents\n• POS terminals for retail merchants and agents\n• Bill payments and fund transfers\n\nInterested in becoming an Open Nearby agent? Let us know and we'll connect you with our agency team!"
+      "answer": "\ud83d\udccd Open Nearby brings financial services to your doorstep:\n\u2022 Cash deposit (cash-in) & withdrawal (cash-out) at nearby verified agents\n\u2022 POS terminals for retail merchants and agents\n\u2022 Bill payments and fund transfers\n\nInterested in becoming an Open Nearby agent? Let us know and we'll connect you with our agency team!"
     },
     {
       "id": "open_invest",
@@ -119,7 +119,7 @@
         "yield",
         "fixed deposit"
       ],
-      "answer": "📈 Open Invest helps you grow your wealth:\n• High-yield automated savings plans\n• Fixed and flexible investment portfolios\n• Regulated, secure assets with attractive returns\n• Real-time portfolio tracking in your OpenSpace dashboard"
+      "answer": "\ud83d\udcc8 Open Invest helps you grow your wealth:\n\u2022 High-yield automated savings plans\n\u2022 Fixed and flexible investment portfolios\n\u2022 Regulated, secure assets with attractive returns\n\u2022 Real-time portfolio tracking in your OpenSpace dashboard"
     },
     {
       "id": "transfer_transaction_help",
@@ -132,7 +132,7 @@
         "check transaction",
         "receipt"
       ],
-      "answer": "Need help with a transfer?\n• Most transfers are instant. If a transfer is delayed, interbank settlement can take up to 24 hours.\n• You can check transaction history and download receipts directly in the ${COMPANY_NAME} app.\n• If you need us to trace a specific transaction, provide the Transaction Reference ID and Amount."
+      "answer": "Need help with a transfer?\n\u2022 Most transfers are instant. If a transfer is delayed, interbank settlement can take up to 24 hours.\n\u2022 You can check transaction history and download receipts directly in the ${COMPANY_NAME} app.\n\u2022 If you need us to trace a specific transaction, provide the Transaction Reference ID and Amount."
     },
     {
       "id": "payment_disputes",
@@ -146,7 +146,7 @@
         "chargeback",
         "complaint"
       ],
-      "answer": "To report a payment dispute or failed transaction:\n• Please provide: Transaction Reference, Date, Amount, and a brief description.\n• You can also email ${COMPANY_EMAIL} or say “dispute” here to log a support ticket immediately."
+      "answer": "To report a payment dispute or failed transaction:\n\u2022 Please provide: Transaction Reference, Date, Amount, and a brief description.\n\u2022 You can also email ${COMPANY_EMAIL} or say \u201cdispute\u201d here to log a support ticket immediately."
     },
     {
       "id": "human",
@@ -160,6 +160,65 @@
         "operator"
       ],
       "answer": "I can connect you with an OpenSpace customer support representative. Tell me what you need assistance with and I'll loop in our team."
+    },
+    {
+      "id": "failed_transaction_escalation",
+      "patterns": [
+        "money not received",
+        "transaction failed",
+        "payment failed",
+        "transfer failed",
+        "deducted but not sent",
+        "deducted without credit",
+        "not credited",
+        "money missing",
+        "money deducted",
+        "wrong debit",
+        "incorrect debit"
+      ],
+      "answer": "\u26a0\ufe0f Sorry to hear about this! To help resolve your failed or missing transaction, we'll need to collect a few details:\n\n1. \ud83d\udcf5 *Transaction ID / Reference Number* \u2014 found in your transaction history or SMS alert.\n2. \ud83d\udcb0 *Amount* involved.\n3. \ud83d\udcf8 *A screenshot or photo of your receipt* (if available).\n\nSimply reply *\"dispute\"* and I'll walk you through the process step by step. All your details will be forwarded directly to our customer service team for swift resolution."
+    },
+    {
+      "id": "unresolved_issue",
+      "patterns": [
+        "not resolved",
+        "still having issues",
+        "problem not fixed",
+        "issue not resolved",
+        "can't help me",
+        "cannot help",
+        "need more help",
+        "speak to manager",
+        "escalate",
+        "this isn't helping",
+        "not helpful"
+      ],
+      "answer": "I understand your concern and I'm sorry this hasn't been fully resolved yet. \ud83d\ude4f\n\nLet me connect you directly with a member of our customer service team who can give your case the personal attention it deserves.\n\nJust reply *\"agent\"* or *\"yes\"* and I'll escalate this right away, along with all the details from our conversation."
+    },
+    {
+      "id": "receipt_screenshot",
+      "patterns": [
+        "how to send receipt",
+        "send screenshot",
+        "upload receipt",
+        "attach receipt",
+        "send photo of receipt",
+        "send transaction proof"
+      ],
+      "answer": "To send your receipt or transaction screenshot:\n\n\ud83d\uddf3\ufe0f Simply *attach the image* directly to this WhatsApp chat \u2014 just like sending a regular photo.\n\nOnce received, our team will use it to verify and resolve your issue faster. If you're unable to find or send the receipt, don't worry \u2014 just type *skip* and we'll proceed with the information we have."
+    },
+    {
+      "id": "customer_service_contact",
+      "patterns": [
+        "customer service",
+        "customer support",
+        "speak to customer service",
+        "talk to support",
+        "contact support",
+        "reach support team",
+        "support team"
+      ],
+      "answer": "You can reach our customer service team through any of the following:\n\n\ud83d\udce7 *Email:* ${COMPANY_EMAIL}\n\ud83d\udcde *Phone:* ${COMPANY_PHONE}\n\ud83d\udd52 *Hours:* Mon\u2013Fri, 9:00 AM \u2013 5:00 PM WAT\n\nAlternatively, type *\"agent\"* here and I'll flag your message to a support representative right away!"
     }
   ]
 }
